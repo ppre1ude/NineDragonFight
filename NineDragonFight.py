@@ -67,9 +67,35 @@ def play_game():
 
         # 승자 결정 
         winner = determine_winner(tile1, tile2)
-        if winner:
-            current_player.round_points += 1  
+
+        # 유지 
+        if current_player == player and winner == tile1:
+            print("======User의 승리======")
+            current_player.round_points += 1
             match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
+            current_player, other_player = player, ai_player
+
+        # 변경 
+        elif current_player == player and winner == tile2:
+            print("======AI의 승리======")
+            other_player.round_points += 1   
+            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
+            current_player, other_player = ai_player, player
+
+        # 유지 
+        elif current_player == ai_player and winner == tile1:
+            print("======AI의 승리======")
+            current_player.round_points += 1
+            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
+            current_player, other_player = ai_player, player
+
+        # 변경
+        elif current_player == ai_player and winner == tile2:
+            print("======User의 승리======")
+            other_player.round_points += 1
+            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
+            current_player, other_player = player, ai_player
+
         else:
             print("무승부!")
             match_log.append(f"무승부 : {tile1} vs. {tile2}.")
@@ -77,9 +103,6 @@ def play_game():
         # Print round points for both players
         print(f"라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}")
         print("====================================================================================")
-
-        # Change current player for the next round
-        current_player = other_player
 
     # 경기 결과 출력 
     print("\n게임 종료!")

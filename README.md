@@ -1,4 +1,5 @@
 # NineDragonFight
+![구룡투 이미지](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5ACfTa_5pDlhopGxr8fKmgGu6WRO5D2m8Gg&s)
 
 ## 규칙
 1. 이 게임은 2인용이다.

@@ -27,22 +27,22 @@ def play_game():
     match_log = [] 
 
     while player.tiles and ai_player.tiles:
-        print(f"\n{current_player.name}의 차례")
+        print(f"\n[{current_player.name}의 차례]")
         
         tile1 = current_player.choose_tile()
         if current_player == ai_player: 
             if tile1.color == 'black':
-                print("AI가 낸 색상 : ⚫️")
+                print("AI가 낸 색상 : ⚫️\n")
             else:
-                print("AI가 낸 색상 : ⚪️")
+                print("AI가 낸 색상 : ⚪️\n")
 
         other_player = ai_player if current_player == player else player
         tile2 = other_player.choose_tile()
         if current_player == player: 
             if tile2.color == 'black':
-                print("AI가 낸 색상 : ⚫️")
+                print("AI가 낸 색상 : ⚫️\n")
             else:
-                print("AI가 낸 색상 : ⚪️")
+                print("AI가 낸 색상 : ⚪️\n")
 
 
         # 승자 결정 

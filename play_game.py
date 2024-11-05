@@ -23,11 +23,15 @@ def determine_winner(tile1, tile2):
 
 def user_vs_ai_play_game():
     player = HumanPlayer.Player("User")
-    ai_player = AIPlayer.RandomAI("RandomAI")
+    ai_player = AIPlayer.RandomAI("RandomAI", time.time())
     current_player = random.choice([player, ai_player])
     match_log = [] 
+    round = 1
 
     while player.tiles and ai_player.tiles:
+        print()
+        print(f" ※ {round} 라운드 시작 ※ ")
+        round+=1
         print(f"\n[{current_player.name}의 차례]")
         
         tile1 = current_player.choose_tile()
@@ -83,7 +87,7 @@ def user_vs_ai_play_game():
 
         # Print round points for both players
         print(f"라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}")
-        print("====================================================================================")
+        print("=" * 30)
 
     # 경기 결과 출력 
     print("\n게임 종료!")

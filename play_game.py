@@ -99,6 +99,7 @@ def user_vs_ai_play_game():
 def ai_vs_ai_play_game(k):
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
+    draw_count = 0 
     while(k > 0): 
         ai_player1 = AIPlayer.RandomAI("RandomAI-1", 1234 + k + time.time())
         ai_player2 = AIPlayer.RandomAI("RandomAI-2", 2435 + k + time.time())
@@ -150,7 +151,7 @@ def ai_vs_ai_play_game(k):
         elif ai_player1.round_points < ai_player2.round_points:
             ai_player2_winning_count += 1
         else:
-            pass
+            draw_count += 1
 
         k -= 1 
     
@@ -158,6 +159,7 @@ def ai_vs_ai_play_game(k):
     print("\n게임 종료!")
     print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}")
     print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}")
+    print(f"무승부 횟수 = {draw_count}")
 
         # print("\n경기 기록: ")
         # print("=" * 30)  

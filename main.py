@@ -3,7 +3,7 @@ if __name__ == "__main__":
     print("유저 vs AI 모드 : 1")
     print("AI vs AI 모드 : 2")
 
-    n = int(input())
+    n = int(input("모드를 입력하세요 : "))
     if n == 1: 
         play_game.user_vs_ai_play_game()
     else : 

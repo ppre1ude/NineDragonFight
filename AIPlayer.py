@@ -1,5 +1,6 @@
 import random
 import play_game 
+import time 
 
 class RandomAI:
     def __init__(self, name):
@@ -10,7 +11,7 @@ class RandomAI:
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
-        random.seed(2024)
+        random.seed(time.time())
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)
         return chosen_tile

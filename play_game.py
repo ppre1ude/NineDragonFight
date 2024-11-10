@@ -14,6 +14,9 @@ class Tile:
     def __str__(self):
         emoji = "⚪️" if self.color == 'white' else "⚫️"  # 이모지로 색상 표현
         return f"{emoji} {self.number}"
+    
+    def __lt__(self, other):
+        return self.number < other.number
 
 def determine_winner(tile1, tile2):
     if tile1.number == tile2.number: # 무승부 
@@ -93,7 +96,7 @@ def user_vs_ai_play_game():
         print("=" * 30)
 
     # 경기 결과 출력 
-    print("\n게임 종료!")
+    print(Style.BRIGHT, Fore.YELLOW, "\n게임 종료!", Style.RESET_ALL)
     print(f"최종 라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}")
     print("\n경기 기록: ")
     print("=" * 30)  
@@ -108,10 +111,9 @@ def ai_vs_ai_play_game(k):
     ai_player2_winning_count = 0
     draw_count = 0 
     while(k > 0): 
-        ai_player1 = AIPlayer.RandomAI("RandomAI-1", 1234 + k + time.time())
-        ai_player2 = AIPlayer.RandomAI("RandomAI-2", 2435 + k + time.time())
+        ai_player1 = AIPlayer.작은거부터내는AI("작은거부터내는AI")
+        ai_player2 = AIPlayer.큰거내고작은거내는AI("큰거내고작은거내는AI")
         current_player = random.choice([ai_player1, ai_player2])
-        match_log = [] 
 
         while ai_player1.tiles and ai_player2.tiles:
             
@@ -125,29 +127,22 @@ def ai_vs_ai_play_game(k):
             # 유지 
             if current_player == ai_player1 and winner == tile1:
                 current_player.round_points += 1
-                match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
                 current_player, other_player = ai_player1, ai_player2
 
             # 변경 
             elif current_player == ai_player1 and winner == tile2:
                 other_player.round_points += 1   
-                match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
                 current_player, other_player = ai_player2, ai_player1
 
             # 유지 
             elif current_player == ai_player2 and winner == tile1:
                 current_player.round_points += 1
-                match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
                 current_player, other_player = ai_player2, ai_player1
 
             # 변경
             elif current_player == ai_player2 and winner == tile2:
                 other_player.round_points += 1
-                match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
                 current_player, other_player = ai_player1, ai_player2
-
-            else:
-                match_log.append(f"무승부 : {tile1} vs. {tile2}.")
 
             # Print round points for both players
             # print(f"라운드 포인트 : {ai_player1.name}: {ai_player1.round_points}, {ai_player2.name}: {ai_player2.round_points}")
@@ -164,9 +159,10 @@ def ai_vs_ai_play_game(k):
     
     #경기 결과 출력 
     print("\n게임 종료!")
-    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}")
-    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}")
-    print(f"무승부 횟수 = {draw_count}")
+    total = ai_player1_winning_count + ai_player2_winning_count + draw_count
+    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 승률 = {round(ai_player1_winning_count / total * 100)}%")
+    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100)}%")
+    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
         # print("\n경기 기록: ")
         # print("=" * 30)  

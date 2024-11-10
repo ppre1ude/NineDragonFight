@@ -2,6 +2,9 @@ import HumanPlayer
 import AIPlayer
 import random 
 import time 
+from colorama import init, Fore, Style 
+
+init()
 
 class Tile:
     def __init__(self, number):
@@ -30,7 +33,7 @@ def user_vs_ai_play_game():
 
     while player.tiles and ai_player.tiles:
         print()
-        print(f" ※ {round} 라운드 시작 ※ ")
+        print(Style.BRIGHT, Fore.YELLOW, f"※ {round} 라운드 시작 ※ ", Style.RESET_ALL)
         round+=1
         print(f"\n[{current_player.name}의 차례]")
         
@@ -55,38 +58,38 @@ def user_vs_ai_play_game():
 
         # 유지 
         if current_player == player and winner == tile1:
-            print("======User의 승리======")
+            print(Style.BRIGHT, Fore.BLUE, "\n !!!User의 승리!!!", Style.RESET_ALL)
             current_player.round_points += 1
             match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
             current_player, other_player = player, ai_player
 
         # 변경 
         elif current_player == player and winner == tile2:
-            print("======AI의 승리======")
+            print(Style.BRIGHT, Fore.RED, "\n !!!AI의 승리!!!", Style.RESET_ALL)
             other_player.round_points += 1   
             match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
             current_player, other_player = ai_player, player
 
         # 유지 
         elif current_player == ai_player and winner == tile1:
-            print("======AI의 승리======")
+            print(Style.BRIGHT, Fore.RED, "\n !!!AI의 승리!!!", Style.RESET_ALL)
             current_player.round_points += 1
             match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
             current_player, other_player = ai_player, player
 
         # 변경
         elif current_player == ai_player and winner == tile2:
-            print("======User의 승리======")
+            print(Style.BRIGHT, Fore.BLUE, "\n !!!User의 승리!!!", Style.RESET_ALL)
             other_player.round_points += 1
             match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
             current_player, other_player = player, ai_player
 
         else:
-            print("무승부!")
+            print(Style.BRIGHT, Fore.GREEN, "\n !!!무승부!!!", Style.RESET_ALL)
             match_log.append(f"무승부 : {tile1} vs. {tile2}.")
 
         # Print round points for both players
-        print(f"라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}")
+        print(Style.BRIGHT, Fore.YELLOW, f"라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}", Style.RESET_ALL)
         print("=" * 30)
 
     # 경기 결과 출력 

@@ -156,7 +156,7 @@ class QLearningAI:
         return tuple(sorted([tile.number for tile in self.tiles]))
     
     def choose_tile(self):
-        random.seed(time.time())
+        random.seed(time.time_ns())
         state = self.get_state()
         
         # Q-테이블에서 현재 상태에 대한 행동 선택

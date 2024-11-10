@@ -126,7 +126,7 @@ class CalculateOpponentTileAI:
 
 class MaintainPointsAI:
     def __init__(self):
-        self.name = "무승부 유도 AI"
+        self.name = "라운드 포인트 유지 AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
         self.round_points = 0
 
@@ -141,6 +141,67 @@ class MaintainPointsAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
         
+class QLearningAI:
+    def __init__(self, epsilon=0.1, alpha=0.8, gamma=0.9, epsilon_decay=0.995, min_epsilon=0.01):
+        self.name = "Q-Learning AI"
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일
+        self.q_table = {}  # Q-테이블 (상태 -> 행동)
+        self.epsilon = epsilon  # 탐험 비율
+        self.alpha = alpha  # 학습률
+        self.gamma = gamma  # 할인율
+        self.epsilon_decay = epsilon_decay
+        self.min_epsilon = min_epsilon
+        self.round_points = 0
+    
+    def get_state(self):
+        return tuple(sorted([tile.number for tile in self.tiles]))
+    
+    def choose_tile(self):
+        random.seed(time.time())
+        state = self.get_state()
+        
+        # Q-테이블에서 현재 상태에 대한 행동 선택
+        if random.uniform(0, 1) < self.epsilon:
+            tile = random.choice(self.tiles)
+        else:
+            # 이용 (Exploitation): Q값이 최대인 행동 선택
+            if state not in self.q_table:
+                self.q_table[state] = {tile.number: 0 for tile in self.tiles}  # 초기화
+            
+            # Q-값이 가장 큰 타일을 선택
+            tile_number = max(self.q_table[state], key=self.q_table[state].get)
+            
+            # 해당 타일이 self.tiles에 존재하는지 확인하고 선택
+            tile = next((t for t in self.tiles if t.number == tile_number), None)
+        
+        if tile:
+            self.tiles.remove(tile)
+            return tile
+        else:
+            # 만약 타일을 찾을 수 없다면, 리스트에서 랜덤하게 선택
+            tile = random.choice(self.tiles)
+            self.tiles.remove(tile)
+            return tile
+    
+    def learn(self, previous_state, action, reward, next_state):
+        if action is None:
+            return
+        
+        # Q-테이블에서 이전 상태와 행동에 대한 Q-값을 업데이트
+        if previous_state not in self.q_table:
+            self.q_table[previous_state] = {tile.number: 0 for tile in self.tiles}  # 초기화
+        
+        # Q-값 업데이트 공식
+        old_q_value = self.q_table[previous_state].get(action.number, 0)
+        future_q_value = max(self.q_table.get(next_state, {}).values(), default=0)
+        new_q_value = old_q_value + self.alpha * (reward + self.gamma * future_q_value - old_q_value)
+        
+        # Q-값을 새로운 값으로 업데이트
+        self.q_table[previous_state][action.number] = new_q_value
+        # epsilon 값을 점차 감소시킴
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)  # epsilon이 최소값 아래로 내려가지 않게 함
+
+
 
 
 

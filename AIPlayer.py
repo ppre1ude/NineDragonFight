@@ -1,13 +1,14 @@
 import random
 import play_game
+import time 
 
 class RandomAI:
-    def __init__(self, name, seed):
-        self.name = name
+    def __init__(self):
+        self.name = "RamdomAI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 라운드 포인트 
         self.round_log = []  # 각 라운드마다의 기록
-        self.seed = seed
+        self.seed = time.time()
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
@@ -16,9 +17,9 @@ class RandomAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
 
-class 큰거부터내는AI:
-    def __init__(self, name):
-        self.name = name 
+class BigFirstAI:
+    def __init__(self):
+        self.name = "큰 숫자부터 내는 AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 현재 라운드 포인트 
 
@@ -27,9 +28,9 @@ class 큰거부터내는AI:
         self.tiles.remove(chosen_tile)
         return chosen_tile 
     
-class 작은거부터내는AI:
-    def __init__(self, name):
-        self.name = name 
+class SmallFirstAI:
+    def __init__(self):
+        self.name = "작은 숫자부터 내는 AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 현재 라운드 포인트 
 
@@ -38,9 +39,9 @@ class 작은거부터내는AI:
         self.tiles.remove(chosen_tile)
         return chosen_tile 
 
-class 큰거내고작은거내는AI:
-    def __init__(self, name):
-        self.name = name 
+class BigSmallShuffleAI:
+    def __init__(self):
+        self.name = "큰 숫자, 작은 숫자 번갈아 내는 AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 현재 라운드 포인트
         self.use_high_tile = True  # 첫 라운드는 큰 타일부터 시작

@@ -29,7 +29,7 @@ def determine_winner(tile1, tile2):
 
 def user_vs_ai_play_game():
     player = HumanPlayer.Player("User")
-    ai_player = AIPlayer.RandomAI("RandomAI", time.time())
+    ai_player = AIPlayer.RandomAI("RandomAI")
     current_player = random.choice([player, ai_player])
     match_log = [] 
     round = 1
@@ -111,8 +111,8 @@ def ai_vs_ai_play_game(k):
     ai_player2_winning_count = 0
     draw_count = 0 
     while(k > 0): 
-        ai_player1 = AIPlayer.RandomAI(time.time())
-        ai_player2 = AIPlayer.BasedProbabilityAI()
+        ai_player1 = AIPlayer.RandomAI()
+        ai_player2 = AIPlayer.CalculateOpponentTileAI()
         current_player = random.choice([ai_player1, ai_player2])
 
         while ai_player1.tiles and ai_player2.tiles:
@@ -167,7 +167,7 @@ def ai_vs_RLAI_play_game(k):
 
     while k > 0:
         # 규칙 기반 ai 부터 시작한다고 가정 
-        ai_player1 = AIPlayer.BasedProbabilityAI() 
+        ai_player1 = AIPlayer.BigFirstAI() 
         ai_player2 = AIPlayer.QLearningAI()
         current_player = ai_player1
         other_player = ai_player2 

@@ -167,7 +167,7 @@ def ai_vs_RLAI_play_game(k):
 
     while k > 0:
         # 규칙 기반 ai 부터 시작한다고 가정 
-        ai_player1 = AIPlayer.BasedProbabilityAI() 
+        ai_player1 = AIPlayer.CalculateOpponentTileAI() 
         ai_player2 = AIPlayer.QLearningAI()
         current_player = ai_player1
         other_player = ai_player2 
@@ -176,8 +176,7 @@ def ai_vs_RLAI_play_game(k):
         previous_tile = None
 
         while ai_player1.tiles and ai_player2.tiles:
-            # 타일을 선택하기 전 
-            previous_state = tuple(sorted(ai_player2.tiles))  # 상태 갱신
+            previous_state = tuple(sorted(ai_player2.tiles)) 
 
             tile1 = current_player.choose_tile() 
             tile2 = other_player.choose_tile()  

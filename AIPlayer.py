@@ -54,7 +54,6 @@ class MiddleFirstAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
 
-
 class BigSmallShuffleAI:
     def __init__(self):
         self.name = "큰 숫자, 작은 숫자 번갈아 내는 AI"
@@ -142,7 +141,7 @@ class MaintainPointsAI:
         return chosen_tile
         
 class QLearningAI:
-    def __init__(self, epsilon=0.1, alpha=0.8, gamma=0.9, epsilon_decay=0.995, min_epsilon=0.01):
+    def __init__(self, epsilon=0.9, alpha=0.3, gamma=0.9, epsilon_decay=0.995, min_epsilon=0.01):
         self.name = "Q-Learning AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일
         self.q_table = {}  # Q-테이블 (상태 -> 행동)
@@ -157,7 +156,7 @@ class QLearningAI:
         return tuple(sorted([tile.number for tile in self.tiles]))
     
     def choose_tile(self):
-        random.seed(time.time())
+        random.seed(time.time() * 100000 + time.time() * 10000)
         state = self.get_state()
         
         # Q-테이블에서 현재 상태에 대한 행동 선택

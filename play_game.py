@@ -111,8 +111,8 @@ def ai_vs_ai_play_game(k):
     ai_player2_winning_count = 0
     draw_count = 0 
     while(k > 0): 
-        ai_player1 = AIPlayer.BigFirstAI()
-        ai_player2 = AIPlayer.RandomAI()
+        ai_player1 = AIPlayer.RandomAI(1234 + time.time())
+        ai_player2 = AIPlayer.RandomAI(4567 + time.time())
         current_player = random.choice([ai_player1, ai_player2])
 
         while ai_player1.tiles and ai_player2.tiles:

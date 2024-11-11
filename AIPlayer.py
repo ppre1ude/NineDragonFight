@@ -4,7 +4,6 @@ import time
 
 class RandomAI:
     def __init__(self):
-    def __init__(self):
         self.name = "RamdomAI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 라운드 포인트 

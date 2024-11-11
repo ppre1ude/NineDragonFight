@@ -4,6 +4,7 @@ import time
 
 class RandomAI:
     def __init__(self):
+    def __init__(self):
         self.name = "RamdomAI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 라운드 포인트 
@@ -16,6 +17,7 @@ class RandomAI:
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
+        random.seed(time.time_ns())
         random.seed(time.time_ns())
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)

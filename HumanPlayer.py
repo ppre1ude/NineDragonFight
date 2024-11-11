@@ -1,8 +1,8 @@
 import play_game 
 
 class Player:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        self.name = "User"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 라운드 포인트 
         self.round_log = []  # 각 라운드마다의 기록

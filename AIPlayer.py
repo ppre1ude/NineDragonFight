@@ -3,16 +3,20 @@ import play_game
 import time 
 
 class RandomAI:
-    def __init__(self, seed):
+    def __init__(self):
         self.name = "RamdomAI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 라운드 포인트 
         self.round_log = []  # 각 라운드마다의 기록
-        self.seed = seed
+
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0        
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
-        random.seed(self.seed)
+        random.seed(time.time_ns())
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)
         return chosen_tile
@@ -22,6 +26,11 @@ class BigFirstAI:
         self.name = "큰 숫자부터 내는 AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 현재 라운드 포인트 
+
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
 
     def choose_tile(self):
         chosen_tile = max(self.tiles)
@@ -34,6 +43,11 @@ class SmallFirstAI:
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
         self.round_points = 0  # 현재 라운드 포인트 
 
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+
     def choose_tile(self):
         chosen_tile = min(self.tiles)
         self.tiles.remove(chosen_tile)
@@ -43,6 +57,11 @@ class MiddleFirstAI:
     def __init__(self):
         self.name = "중간부터 내는 AI" 
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일 
+        self.round_points = 0
+
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
         self.round_points = 0
 
     def choose_tile(self):
@@ -61,6 +80,10 @@ class BigSmallShuffleAI:
         self.round_points = 0  # 현재 라운드 포인트
         self.use_high_tile = True  # 첫 라운드는 큰 타일부터 시작
 
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
     def choose_tile(self):
         if self.use_high_tile:
             # 남은 타일 중 가장 큰 타일 선택
@@ -84,6 +107,11 @@ class BasedProbabilityAI:
         self.round_points = 0
         self.round_count = 0
 
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+
     def choose_tile(self):
         self.round_count += 1
         win_probability = 1 - (self.round_count / 9)  # 남은 라운드에 따라 승리 확률 조정
@@ -105,6 +133,11 @@ class CalculateOpponentTileAI:
         self.round_points = 0
         self.opponent_high_tiles_played = 0
         self.opponent_low_tiles_played = 0
+    
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
 
     def update_opponent_tile(self, opponent_tile):
         if opponent_tile.number > 5:
@@ -129,6 +162,11 @@ class MaintainPointsAI:
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
         self.round_points = 0
 
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+
     def choose_tile(self):
         if self.round_points > 4:
             # 이미 높은 포인트를 획득했으면 작은 타일을 내며 포인트 유지 전략
@@ -140,23 +178,25 @@ class MaintainPointsAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
         
+
 class QLearningAI:
-    def __init__(self, epsilon=0.9, alpha=0.3, gamma=0.9, epsilon_decay=0.995, min_epsilon=0.01):
+    def __init__(self, epsilon=0.8, alpha=0.3, gamma=0.9, epsilon_decay=0.95, min_epsilon=0.8):
         self.name = "Q-Learning AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일
         self.q_table = {}  # Q-테이블 (상태 -> 행동)
         self.epsilon = epsilon  # 탐험 비율
         self.alpha = alpha  # 학습률
-        self.gamma = gamma  # 할인율
+        self.gamma = gamma  # 할인율    
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
         self.round_points = 0
+        self.탐험횟수 = 0
     
     def get_state(self):
         return tuple(sorted([tile.number for tile in self.tiles]))
     
     def choose_tile(self):
-        random.seed(time.time() * 100000 + time.time() * 10000)
+        random.seed(time.time_ns())
         state = self.get_state()
         
         # Q-테이블에서 현재 상태에 대한 행동 선택
@@ -182,23 +222,29 @@ class QLearningAI:
             self.tiles.remove(tile)
             return tile
     
-    def learn(self, previous_state, action, reward, next_state):
-        if action is None:
-            return
-        
-        # Q-테이블에서 이전 상태와 행동에 대한 Q-값을 업데이트
-        if previous_state not in self.q_table:
-            self.q_table[previous_state] = {tile.number: 0 for tile in self.tiles}  # 초기화
-        
-        # Q-값 업데이트 공식
-        old_q_value = self.q_table[previous_state].get(action.number, 0)
-        future_q_value = max(self.q_table.get(next_state, {}).values(), default=0)
-        new_q_value = old_q_value + self.alpha * (reward + self.gamma * future_q_value - old_q_value)
-        
-        # Q-값을 새로운 값으로 업데이트
-        self.q_table[previous_state][action.number] = new_q_value
+    def reset_tiles(self):
+        # 1부터 9까지 타일을 다시 할당
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+
+    def learn(self, q_learning_played_tile, reward):
+        # 게임 결과 기반 학습 진행
+        for tile in q_learning_played_tile:
+            state = self.get_state()
+            # Q-테이블에서 이전 상태와 행동에 대한 Q-값을 업데이트
+            if state not in self.q_table:
+                self.q_table[state] = {tile.number: 0 for tile in self.tiles}  # 초기화
+            
+            old_q_value = self.q_table[state].get(tile.number, 0)
+            future_q_value = max(self.q_table.get(state, {}).values(), default=0)
+            new_q_value = old_q_value + self.alpha * (reward + self.gamma * future_q_value - old_q_value)
+            
+            # Q-값을 새로운 값으로 업데이트
+            self.q_table[state][tile.number] = new_q_value
         # epsilon 값을 점차 감소시킴
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)  # epsilon이 최소값 아래로 내려가지 않게 함
+
+
 
 
 

@@ -17,6 +17,10 @@ class Tile:
     
     def __lt__(self, other):
         return self.number < other.number
+    
+    def display_tile(self):
+        print(f"Tile {self.number}: {self.color} color")
+    
 
 def determine_winner(tile1, tile2):
     if tile1.number == tile2.number: # 무승부 
@@ -28,8 +32,8 @@ def determine_winner(tile1, tile2):
     return tile1 if tile1.number > tile2.number else tile2
 
 def user_vs_ai_play_game():
-    player = HumanPlayer.Player("User")
-    ai_player = AIPlayer.RandomAI("RandomAI", time.time())
+    player = HumanPlayer.Player()
+    ai_player = AIPlayer.BasedProbabilityAI()
     current_player = random.choice([player, ai_player])
     match_log = [] 
     round = 1
@@ -110,9 +114,12 @@ def ai_vs_ai_play_game(k):
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
     draw_count = 0 
+
+    ai_player1 = AIPlayer.RandomAI()
+    ai_player2 = AIPlayer.CalculateOpponentTileAI()
     while(k > 0): 
-        ai_player1 = AIPlayer.RandomAI(time.time())
-        ai_player2 = AIPlayer.BasedProbabilityAI()
+        ai_player1.reset_tiles()
+        ai_player2.reset_tiles()
         current_player = random.choice([ai_player1, ai_player2])
 
         while ai_player1.tiles and ai_player2.tiles:
@@ -164,72 +171,85 @@ def ai_vs_RLAI_play_game(k):
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
     draw_count = 0
+    # 규칙 기반 ai 부터 시작한다고 가정 
+    ai_player1 = AIPlayer.SmallFirstAI() 
+    ai_player2 = AIPlayer.QLearningAI()
+
+    total_games_played = 0 # 전체 게임 횟수 추적
 
     while k > 0:
-        # 규칙 기반 ai 부터 시작한다고 가정 
-        ai_player1 = AIPlayer.CalculateOpponentTileAI() 
-        ai_player2 = AIPlayer.QLearningAI()
+
+        # 플레이어의 타일과 포인트 초기화
+        ai_player1.reset_tiles()
+        ai_player2.reset_tiles()
+
         current_player = ai_player1
         other_player = ai_player2 
         
-        previous_state = None
-        previous_tile = None
+        q_learning_played_tile = [] # 큐 러닝 ai가 낸 타일 저장 
 
         while ai_player1.tiles and ai_player2.tiles:
-            previous_state = tuple(sorted(ai_player2.tiles)) 
 
+            # 타일 선택 
             tile1 = current_player.choose_tile() 
             tile2 = other_player.choose_tile()  
 
-            # 타일을 선택한 후 
-            next_state = tuple(sorted(ai_player2.tiles))
+            # 큐러닝 ai가 낸 타일 저장 
+            if current_player == ai_player1: q_learning_played_tile.append(tile2)
+            else: q_learning_played_tile.append(tile1)
 
             # 승자 결정
             winner = determine_winner(tile1, tile2)
 
             # 승자에 따른 포인트 처리
-            if current_player == ai_player1 and winner == tile1: # 규칙 ai가 이김 
+            if current_player == ai_player1 and winner == tile1: 
                 current_player.round_points += 1
-                reward = -1
-                previous_tile = tile2
                 current_player, other_player = ai_player1, ai_player2
-            elif current_player == ai_player1 and winner == tile2: # 큐러닝이 이김 
+            elif current_player == ai_player1 and winner == tile2: 
                 other_player.round_points += 1
-                reward = 1
-                previous_tile = tile2 
                 current_player, other_player = ai_player2, ai_player1
-            elif current_player == ai_player2 and winner == tile1: # 큐러닝이 이김 
+            elif current_player == ai_player2 and winner == tile1:
                 current_player.round_points += 1
-                reward = 1
-                previous_tile = tile1
                 current_player, other_player = ai_player2, ai_player1
-            elif current_player == ai_player2 and winner == tile2: # 규칙 ai가 이김 
+            elif current_player == ai_player2 and winner == tile2: 
                 other_player.round_points += 1
-                reward = -1
-                previous_tile = tile1 
                 current_player, other_player = ai_player1, ai_player2
-            else: # 무승부
-                reward = 0
-                previous_tile = tile1 if current_player == ai_player2 else tile2
+            else: 
                 current_player, other_player = ai_player1, ai_player2
-            
-            ai_player2.learn(previous_state, previous_tile, reward, next_state)
+        
 
-        # 라운드 종료 후 승자 집계
+        # 경기 결과 반영 
         if ai_player1.round_points > ai_player2.round_points:
             ai_player1_winning_count += 1
+            reward = -10
         elif ai_player1.round_points < ai_player2.round_points:
             ai_player2_winning_count += 1
+            reward = 10
         else:
             draw_count += 1
+            reward = -5
+        
+        # 경기가 끝난 후 큐러닝 ai 학습 진행 
+        ai_player2.learn(q_learning_played_tile, reward)
+
+        # 게임이 끝난 후 승률 계산
+        total_games_played += 1
+        q_learning_win_rate = (ai_player2_winning_count / total_games_played) * 100
+        q_learning_draw_rate = (draw_count / total_games_played) * 100
+
+        # 승률 출력
+        if k % 100 == 0:
+            print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
+            print(f"게임 {total_games_played}회, 큐러닝 AI 승리 횟수: {ai_player2_winning_count}, 무승부 횟수 : {draw_count}, 승률: {q_learning_win_rate:.2f}%, 무승부율 : {q_learning_draw_rate:.2f}%")
+            print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
 
         k -= 1
-
+        
     # 게임 결과 출력
     print("\n게임 종료!")
     total = ai_player1_winning_count + ai_player2_winning_count + draw_count
-    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 승률 = {round(ai_player1_winning_count / total * 100)}%")
-    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100)}%")
-    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
+    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 승률 = {round(ai_player1_winning_count / total * 100, 2)}%")
+    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100, 2)}%")
+    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100, 2)}%")
 
 

@@ -18,10 +18,6 @@ class Tile:
     def __lt__(self, other):
         return self.number < other.number
     
-    def display_tile(self):
-        print(f"Tile {self.number}: {self.color} color")
-    
-
 def determine_winner(tile1, tile2):
     if tile1.number == tile2.number: # 무승부 
         return None  
@@ -116,7 +112,7 @@ def ai_vs_ai_play_game(k):
     draw_count = 0 
 
     ai_player1 = AIPlayer.RandomAI()
-    ai_player2 = AIPlayer.CalculateOpponentTileAI()
+    ai_player2 = AIPlayer.SmallFirstAI()
     while(k > 0): 
         ai_player1.reset_tiles()
         ai_player2.reset_tiles()
@@ -172,7 +168,7 @@ def ai_vs_RLAI_play_game(k):
     ai_player2_winning_count = 0
     draw_count = 0
     # 규칙 기반 ai 부터 시작한다고 가정 
-    ai_player1 = AIPlayer.SmallFirstAI() 
+    ai_player1 = AIPlayer.BigFirstAI() 
     ai_player2 = AIPlayer.QLearningAI()
 
     total_games_played = 0 # 전체 게임 횟수 추적
@@ -218,16 +214,15 @@ def ai_vs_RLAI_play_game(k):
                 current_player, other_player = ai_player1, ai_player2
         
 
-        # 경기 결과 반영 
-        if ai_player1.round_points > ai_player2.round_points:
+        # 경기 결과 반영(reward는 라운드 포인트 차로 설정해보자)
+        round_points_diff = ai_player1.round_points - ai_player2.round_points
+        reward = round_points_diff * 10
+        if round_points_diff > 0:
             ai_player1_winning_count += 1
-            reward = -10
-        elif ai_player1.round_points < ai_player2.round_points:
+        elif round_points_diff < 0:
             ai_player2_winning_count += 1
-            reward = 10
         else:
             draw_count += 1
-            reward = -5
         
         # 경기가 끝난 후 큐러닝 ai 학습 진행 
         ai_player2.learn(q_learning_played_tile, reward)
@@ -235,21 +230,24 @@ def ai_vs_RLAI_play_game(k):
         # 게임이 끝난 후 승률 계산
         total_games_played += 1
         q_learning_win_rate = (ai_player2_winning_count / total_games_played) * 100
-        q_learning_draw_rate = (draw_count / total_games_played) * 100
+        rule_ai_win_rate = (ai_player1_winning_count / total_games_played) * 100
 
         # 승률 출력
-        if k % 100 == 0:
+        if k % 20000 == 0:
             print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
-            print(f"게임 {total_games_played}회, 큐러닝 AI 승리 횟수: {ai_player2_winning_count}, 무승부 횟수 : {draw_count}, 승률: {q_learning_win_rate:.2f}%, 무승부율 : {q_learning_draw_rate:.2f}%")
+            print(f"게임 {total_games_played}회, 큐러닝 승률: {q_learning_win_rate:.2f}%, 규칙 AI 승률 : {rule_ai_win_rate:.2f}%")
             print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
 
         k -= 1
         
     # 게임 결과 출력
+    print("큐 러닝 탐험 횟수 : ", ai_player2.탐험횟수)
+    print("큐 러닝 이용 횟수 : ", ai_player2.이용횟수)
+    for i in q_learning_played_tile:
+        print(i)
     print("\n게임 종료!")
     total = ai_player1_winning_count + ai_player2_winning_count + draw_count
-    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 승률 = {round(ai_player1_winning_count / total * 100, 2)}%")
-    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100, 2)}%")
-    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100, 2)}%")
+    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 큐 러닝 승률 = {round(ai_player2_winning_count / total * 100, 2)}%")
+    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 규칙 AI 승률 = {round(ai_player1_winning_count / total * 100, 2)}%")
 
 

@@ -16,8 +16,7 @@ class RandomAI:
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
-        random.seed(time.time_ns())
-        random.seed(time.time_ns())
+        random.seed(time.time_ns() + time.time_ns())
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)
         return chosen_tile
@@ -180,8 +179,13 @@ class MaintainPointsAI:
         return chosen_tile
         
 
+"""
+엡실론 (ε): 탐험과 이용의 균형을 조절하는 값. 값이 클수록 탐험을 많이 하며, 값이 작을수록 이미 알고 있는 행동을 자주 선택.
+알파 (α): 학습률. 값이 클수록 새로운 경험에 따라 Q-값이 빠르게 갱신되고, 값이 작을수록 이전 정보에 영향을 더 받음.
+감마 (γ): 할인율. 미래 보상의 중요도를 조절. 값이 크면 장기적인 목표를, 작으면 단기적인 목표를 중시.
+"""
 class QLearningAI:
-    def __init__(self, epsilon=0.8, alpha=0.3, gamma=0.9, epsilon_decay=0.95, min_epsilon=0.8):
+    def __init__(self, epsilon=1, alpha=0.3, gamma=0.9, epsilon_decay=0.95, min_epsilon=0.5):
         self.name = "Q-Learning AI"
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  # 1 ~ 9 까지의 타일
         self.q_table = {}  # Q-테이블 (상태 -> 행동)
@@ -192,6 +196,7 @@ class QLearningAI:
         self.min_epsilon = min_epsilon
         self.round_points = 0
         self.탐험횟수 = 0
+        self.이용횟수 = 0 
     
     def get_state(self):
         return tuple(sorted([tile.number for tile in self.tiles]))
@@ -201,9 +206,11 @@ class QLearningAI:
         state = self.get_state()
         
         # Q-테이블에서 현재 상태에 대한 행동 선택
-        if random.uniform(0, 1) < self.epsilon:
+        if random.uniform(0, 1) <= self.epsilon:
+            self.탐험횟수 += 1
             tile = random.choice(self.tiles)
         else:
+            self.이용횟수 += 1
             # 이용 (Exploitation): Q값이 최대인 행동 선택
             if state not in self.q_table:
                 self.q_table[state] = {tile.number: 0 for tile in self.tiles}  # 초기화
@@ -244,12 +251,3 @@ class QLearningAI:
             self.q_table[state][tile.number] = new_q_value
         # epsilon 값을 점차 감소시킴
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)  # epsilon이 최소값 아래로 내려가지 않게 함
-
-
-
-
-
-
-
-        
-            

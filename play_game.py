@@ -170,26 +170,28 @@ def ai_vs_ai_play_game(k):
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
 def ai_vs_RLAI_play_game(k):
+    """게임 초기 세팅"""
     ai_player = AIPlayer.BigFirstAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0
     q_player_winning_count = 0
     draw_count = 0
-
+    
+    """게임 시작"""
     while k > 0:
+        # 1라운드 선 플레이어는 랜덤으로 설정
         is_ai_player_first = random.choice([True, False])
 
-        # 게임마다 타일 초기화
+        # 게임마다 타일 리필
         ai_player.reset_tiles()
         q_player.reset_tiles()
-        
         
         q_learning_played_tile = [] 
         ai_player_played_tile = [] 
         current_round = 1
 
-        """게임 시작"""
+        """라운드 시작"""
         while ai_player.tiles and q_player.tiles:
 
             # 타일 고르기 
@@ -216,7 +218,7 @@ def ai_vs_RLAI_play_game(k):
             else: pass 
 
             current_round += 1
-        """게임 끝"""
+        """라운드 끝"""
 
         # 게임 종료 후 승자 집계
         if ai_player.round_points > q_player.round_points:
@@ -232,8 +234,9 @@ def ai_vs_RLAI_play_game(k):
         # 게임 종료 후 큐 테이블 업데이트
         q_player.update_q_table(q_learning_played_tile, ai_player_played_tile, game_result)
 
-        # 다음 게임진행 
+        # 다음 게임 진행 
         k -= 1
+        """게임 끝 """
 
     """모든 게임 종료"""
     # 게임 결과 출력

@@ -263,6 +263,7 @@ class DaehanQLearning:
         self.min_epsilon = 0.1 
     
     def display_q_table(self):
+        """Q Table을 출력하는 메서드."""
         for round, tiles in self.q_table.items():
             print(f"Round {round}:")
             for tile, q_value in tiles.items():
@@ -274,6 +275,7 @@ class DaehanQLearning:
         self.round_points = 0  
     
     def choose_tile(self, current_round):
+        """타일을 고르는 메서드"""
         random.seed(time.time_ns())
 
         # 탐험 
@@ -286,14 +288,14 @@ class DaehanQLearning:
             # 현재 라운드 큐 테이블
             current_round_q_table = self.q_table[current_round]
 
-            # 내림차순 정렬된 현재 라운드 큐 테이블 
+            # 내림차순 정렬된 현재 라운드 큐 테이블 <-- 안 써도 될 듯? 최적화 필요 
             sorted_current_round_q_table = sorted(
                 current_round_q_table.items(),
                 key = lambda x : x[1],
                 reverse = True 
             )
 
-            """최대 q 값이 손패에 없다면 다음 최대 q 값을 선택하는 로직"""
+            """최대 q 값이 손패에 없다면 다음 최대 q 값을 선택하는 로직(안 쓰는게 더 좋음)"""
             # for tile_number, q_value in sorted_current_round_q_table:
             #     max_tile = play_game.Tile(tile_number)
             #     if max_tile in self.tiles:
@@ -331,4 +333,5 @@ class DaehanQLearning:
             else:
                 self.q_table[round][q_tile] -= 1 / tile_diff
         
+        # epsilon 감소
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)

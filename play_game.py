@@ -170,7 +170,7 @@ def ai_vs_ai_play_game(k):
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
 def ai_vs_RLAI_play_game(k):
-    ai_player = AIPlayer.MaintainPointsAI() 
+    ai_player = AIPlayer.BigFirstAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0

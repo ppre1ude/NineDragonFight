@@ -291,13 +291,23 @@ class DaehanQLearning:
                 reverse = True 
             )
 
-            # 현재 q 값이 최대인 타일을 가지고 있다면 그 타일을 선택하고
-            # 그 타일이 손에 없다면 그 다음으로 큰 타일 선택 
+            """최대 q 값이 손패에 없다면 다음 최대 q 값을 선택하는 로직"""
+            # for tile_number, q_value in sorted_current_round_q_table:
+            #     max_tile = play_game.Tile(tile_number)
+            #     if max_tile in self.tiles:
+            #         self.tiles.remove(max_tile)
+            #         return max_tile
+            
+            """최대 q 값이 손패에 없다면 랜덤으로 선택하는 로직"""
             for tile_number, q_value in sorted_current_round_q_table:
                 max_tile = play_game.Tile(tile_number)
                 if max_tile in self.tiles:
                     self.tiles.remove(max_tile)
                     return max_tile
+                else:
+                    chosen_tile = random.choice(self.tiles)
+                    self.tiles.remove(chosen_tile)
+                    return chosen_tile                
                 
     # 한 경기가 끝나고 큐 테이블을 업데이트 해줘야 함 
     def update_q_table(self,q_learning_played_tiles, opponent_played_tiles, game_result):      

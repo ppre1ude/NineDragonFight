@@ -18,8 +18,14 @@ class Tile:
     def __lt__(self, other):
         return self.number < other.number
     
+    # max_tile in self.tiles 하기 위해서 필요함
+    def __eq__(self, other):
+        if isinstance(other, Tile):
+            return self.number == other.number
+        return False
+    
 def determine_winner(tile1, tile2):
-    if tile1.number == tile2.number: # 무승부 
+    if tile1.number == tile2.number: 
         return None  
     if tile1.number == 1 and tile2.number == 9: 
         return tile1
@@ -164,90 +170,80 @@ def ai_vs_ai_play_game(k):
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
 def ai_vs_RLAI_play_game(k):
-    ai_player1_winning_count = 0
-    ai_player2_winning_count = 0
-    draw_count = 0
-    # 규칙 기반 ai 부터 시작한다고 가정 
-    ai_player1 = AIPlayer.BigFirstAI() 
-    ai_player2 = AIPlayer.QLearningAI()
+    ai_player = AIPlayer.MaintainPointsAI() 
+    q_player = AIPlayer.DaehanQLearning()
 
-    total_games_played = 0 # 전체 게임 횟수 추적
+    ai_player_winning_count = 0
+    q_player_winning_count = 0
+    draw_count = 0
 
     while k > 0:
+        is_ai_player_first = random.choice([True, False])
 
-        # 플레이어의 타일과 포인트 초기화
-        ai_player1.reset_tiles()
-        ai_player2.reset_tiles()
-
-        current_player = ai_player1
-        other_player = ai_player2 
+        # 게임마다 타일 초기화
+        ai_player.reset_tiles()
+        q_player.reset_tiles()
         
-        q_learning_played_tile = [] # 큐 러닝 ai가 낸 타일 저장 
+        
+        q_learning_played_tile = [] 
+        ai_player_played_tile = [] 
+        current_round = 1
 
-        while ai_player1.tiles and ai_player2.tiles:
+        """게임 시작"""
+        while ai_player.tiles and q_player.tiles:
 
-            # 타일 선택 
-            tile1 = current_player.choose_tile() 
-            tile2 = other_player.choose_tile()  
+            # 타일 고르기 
+            if is_ai_player_first:
+                ai_player_tile = ai_player.choose_tile()
+                q_player_tile = q_player.choose_tile(current_round)
+            else:
+                q_player_tile = q_player.choose_tile(current_round)
+                ai_player_tile = ai_player.choose_tile()
 
-            # 큐러닝 ai가 낸 타일 저장 
-            if current_player == ai_player1: q_learning_played_tile.append(tile2)
-            else: q_learning_played_tile.append(tile1)
+            # 무슨 타일을 골랐는지 기록
+            ai_player_played_tile.append(ai_player_tile)
+            q_learning_played_tile.append(q_player_tile)
 
             # 승자 결정
-            winner = determine_winner(tile1, tile2)
+            winner_tile = determine_winner(ai_player_tile, q_player_tile)
 
-            # 승자에 따른 포인트 처리
-            if current_player == ai_player1 and winner == tile1: 
-                current_player.round_points += 1
-                current_player, other_player = ai_player1, ai_player2
-            elif current_player == ai_player1 and winner == tile2: 
-                other_player.round_points += 1
-                current_player, other_player = ai_player2, ai_player1
-            elif current_player == ai_player2 and winner == tile1:
-                current_player.round_points += 1
-                current_player, other_player = ai_player2, ai_player1
-            elif current_player == ai_player2 and winner == tile2: 
-                other_player.round_points += 1
-                current_player, other_player = ai_player1, ai_player2
-            else: 
-                current_player, other_player = ai_player1, ai_player2
-        
+            if winner_tile == ai_player_tile:
+                ai_player.round_points += 1
+                is_ai_player_first = True 
+            elif winner_tile == q_player_tile:
+                q_player.round_points += 1
+                is_ai_player_first = False 
+            else: pass 
 
-        # 경기 결과 반영(reward는 라운드 포인트 차로 설정해보자)
-        round_points_diff = ai_player1.round_points - ai_player2.round_points
-        reward = round_points_diff * 10
-        if round_points_diff > 0:
-            ai_player1_winning_count += 1
-        elif round_points_diff < 0:
-            ai_player2_winning_count += 1
+            current_round += 1
+        """게임 끝"""
+
+        # 게임 종료 후 승자 집계
+        if ai_player.round_points > q_player.round_points:
+            ai_player_winning_count += 1
+            game_result = -1
+        elif ai_player.round_points < q_player.round_points:
+            q_player_winning_count += 1
+            game_result = 1
         else:
             draw_count += 1
+            game_result = 0
         
-        # 경기가 끝난 후 큐러닝 ai 학습 진행 
-        ai_player2.learn(q_learning_played_tile, reward)
+        # 게임 종료 후 큐 테이블 업데이트
+        q_player.update_q_table(q_learning_played_tile, ai_player_played_tile, game_result)
 
-        # 게임이 끝난 후 승률 계산
-        total_games_played += 1
-        q_learning_win_rate = (ai_player2_winning_count / total_games_played) * 100
-        rule_ai_win_rate = (ai_player1_winning_count / total_games_played) * 100
-
-        # 승률 출력
-        if k % 20000 == 0:
-            print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
-            print(f"게임 {total_games_played}회, 큐러닝 승률: {q_learning_win_rate:.2f}%, 규칙 AI 승률 : {rule_ai_win_rate:.2f}%")
-            print(Style.BRIGHT, Fore.YELLOW, "=" * 30, Style.RESET_ALL)
-
+        # 다음 게임진행 
         k -= 1
-        
+
+    """모든 게임 종료"""
     # 게임 결과 출력
-    print("큐 러닝 탐험 횟수 : ", ai_player2.탐험횟수)
-    print("큐 러닝 이용 횟수 : ", ai_player2.이용횟수)
-    for i in q_learning_played_tile:
-        print(i)
     print("\n게임 종료!")
-    total = ai_player1_winning_count + ai_player2_winning_count + draw_count
-    print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 큐 러닝 승률 = {round(ai_player2_winning_count / total * 100, 2)}%")
-    print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 규칙 AI 승률 = {round(ai_player1_winning_count / total * 100, 2)}%")
+    total = ai_player_winning_count + q_player_winning_count + draw_count
+    print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
+    print(f"{q_player.name}'s winning count = {q_player_winning_count}, 승률 = {round(q_player_winning_count / total * 100)}%")
+    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
+
+    """최종 큐 테이블 출력"""
+    q_player.display_q_table()
 
 

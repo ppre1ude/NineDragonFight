@@ -126,35 +126,35 @@ class BasedProbabilityAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
 
-class CalculateOpponentTileAI:
-    def __init__(self):
-        self.name = "상대방 타일 추정 AI" 
-        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
-        self.round_points = 0
-        self.opponent_high_tiles_played = 0
-        self.opponent_low_tiles_played = 0
+# class CalculateOpponentTileAI:
+#     def __init__(self):
+#         self.name = "상대방 타일 추정 AI" 
+#         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+#         self.round_points = 0
+#         self.opponent_high_tiles_played = 0
+#         self.opponent_low_tiles_played = 0
     
-    def reset_tiles(self):
-        """타일과 점수를 초기화하는 메서드."""
-        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
-        self.round_points = 0
+#     def reset_tiles(self):
+#         """타일과 점수를 초기화하는 메서드."""
+#         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+#         self.round_points = 0
 
-    def update_opponent_tile(self, opponent_tile):
-        if opponent_tile.number > 5:
-            self.opponent_high_tiles_played += 1
-        else:
-            self.opponent_low_tiles_played += 1
+#     def update_opponent_tile(self, opponent_tile):
+#         if opponent_tile.number > 5:
+#             self.opponent_high_tiles_played += 1
+#         else:
+#             self.opponent_low_tiles_played += 1
 
-    def choose_tile(self):
-        if self.opponent_high_tiles_played > self.opponent_low_tiles_played:
-            # 상대가 높은 타일을 주로 냈으면 작은 타일로 대응
-            chosen_tile = min(self.tiles)
-        else:
-            # 상대가 낮은 타일을 주로 냈으면 큰 타일로 대응
-            chosen_tile = max(self.tiles)
+#     def choose_tile(self):
+#         if self.opponent_high_tiles_played > self.opponent_low_tiles_played:
+#             # 상대가 높은 타일을 주로 냈으면 작은 타일로 대응
+#             chosen_tile = min(self.tiles)
+#         else:
+#             # 상대가 낮은 타일을 주로 냈으면 큰 타일로 대응
+#             chosen_tile = max(self.tiles)
         
-        self.tiles.remove(chosen_tile)
-        return chosen_tile
+#         self.tiles.remove(chosen_tile)
+#         return chosen_tile
 
 class MaintainPointsAI:
     def __init__(self):
@@ -251,3 +251,70 @@ class QLearningAI:
             self.q_table[state][tile.number] = new_q_value
         # epsilon 값을 점차 감소시킴
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)  # epsilon이 최소값 아래로 내려가지 않게 함
+
+class DaehanQLearning:
+    def __init__(self):
+        self.name = "Daehan - Q Learning AI"
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]  
+        self.round_points = 0
+        self.q_table = {round : {key : 0 for key in range(1, 10)} for round in range(1, 10)}
+        self.epsilon = 0.1
+    
+    def display_q_table(self):
+        for round, tiles in self.q_table.items():
+            print(f"Round {round}:")
+            for tile, q_value in tiles.items():
+                print(f"  Tile {tile}: Q-Value = {q_value:.2f}")
+        
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0  
+    
+    def choose_tile(self, current_round):
+        random.seed(time.time_ns())
+
+        # 탐험 
+        if random.uniform(0,1) <= self.epsilon:
+            chosen_tile = random.choice(self.tiles)
+            self.tiles.remove(chosen_tile)
+            return chosen_tile
+        # 이용 -> 현재 라운드의 큐 테이블 값이 최댓값인 타일 선택 
+        else:
+            # 현재 라운드 큐 테이블
+            current_round_q_table = self.q_table[current_round]
+
+            # 내림차순 정렬된 현재 라운드 큐 테이블 
+            sorted_current_round_q_table = sorted(
+                current_round_q_table.items(),
+                key = lambda x : x[1],
+                reverse = True 
+            )
+
+            # 현재 q 값이 최대인 타일을 가지고 있다면 그 타일을 선택하고
+            # 그 타일이 손에 없다면 그 다음으로 큰 타일 선택 
+            for tile_number, q_value in sorted_current_round_q_table:
+                max_tile = play_game.Tile(tile_number)
+                if max_tile in self.tiles:
+                    self.tiles.remove(max_tile)
+                    return max_tile
+                
+    # 한 경기가 끝나고 큐 테이블을 업데이트 해줘야 함 
+    def update_q_table(self,q_learning_played_tiles, opponent_played_tiles, game_result):      
+        for round in range(1, 10):
+            q_tile = q_learning_played_tiles[round-1].number
+            opponent_tile = opponent_played_tiles[round-1].number
+            
+            tile_diff = abs(q_tile - opponent_tile)
+            
+            # 상대와 동일한 타일을 냈다면 큐값 업데이트 x
+            if tile_diff == 0:
+                continue  
+
+            # 게임 승리 -> 한 라운드에서 이긴다면 작은 차이로 이기는 것이 더 좋다
+            if game_result > 0:
+                self.q_table[round][q_tile] += 1 / tile_diff 
+            elif game_result == 0: pass 
+            # 게임 패배 -> 진다면 큰 차이로 지는 것이 더 좋다
+            else:
+                self.q_table[round][q_tile] -= 1 / tile_diff

@@ -258,7 +258,9 @@ class DaehanQLearning:
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]  
         self.round_points = 0
         self.q_table = {round : {key : 0 for key in range(1, 10)} for round in range(1, 10)}
-        self.epsilon = 0.1
+        self.epsilon = 1.0
+        self.epsilon_decay = 0.95
+        self.min_epsilon = 0.1 
     
     def display_q_table(self):
         for round, tiles in self.q_table.items():
@@ -328,3 +330,5 @@ class DaehanQLearning:
             # 게임 패배 -> 진다면 큰 차이로 지는 것이 더 좋다
             else:
                 self.q_table[round][q_tile] -= 1 / tile_diff
+        
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)

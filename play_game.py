@@ -159,7 +159,7 @@ def ai_vs_ai_play_game(k):
 
 def ai_vs_RLAI_play_game(k):
     """게임 초기 세팅"""
-    ai_player = AIPlayer.SieunAI() 
+    ai_player = AIPlayer.BigFirstAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0

@@ -159,7 +159,7 @@ def ai_vs_ai_play_game(k):
 
 def ai_vs_RLAI_play_game(k):
     """게임 초기 세팅"""
-    ai_player = AIPlayer.BigFirstAI() 
+    ai_player = AIPlayer.SmallFirstAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0
@@ -224,7 +224,11 @@ def ai_vs_RLAI_play_game(k):
 
         # 다음 게임 진행 
         k -= 1
-        """게임 끝 """
+        
+    """게임 끝 """
+
+    """최종 큐 테이블 출력"""
+    q_player.display_q_table()
 
     """모든 게임 종료"""
     # 게임 결과 출력
@@ -233,8 +237,5 @@ def ai_vs_RLAI_play_game(k):
     print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
     print(f"{q_player.name}'s winning count = {q_player_winning_count}, 승률 = {round(q_player_winning_count / total * 100)}%")
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
-
-    """최종 큐 테이블 출력"""
-    q_player.display_q_table()
 
 

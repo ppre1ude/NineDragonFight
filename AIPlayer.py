@@ -1,6 +1,7 @@
 import random
 import play_game
 import time 
+from tabulate import tabulate 
 
 class RandomAI:
     def __init__(self):
@@ -16,7 +17,7 @@ class RandomAI:
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
-        random.seed(time.time_ns() + time.time_ns())
+        random.seed(time.time_ns() + time.time_ns() + 1234)
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)
         return chosen_tile
@@ -262,13 +263,27 @@ class DaehanQLearning:
         self.epsilon = 1.0
         self.epsilon_decay = 0.95
         self.min_epsilon = 0.1 
-    
+
     def display_q_table(self):
-        """Q Table을 출력하는 메서드."""
-        for round, tiles in self.q_table.items():
-            print(f"Round {round}:")
-            for tile, q_value in tiles.items():
-                print(f"  Tile {tile}: Q-Value = {q_value:.2f}")
+        """Q Table을 전체 라운드를 포함한 9x9 표로 출력하는 메서드."""
+        
+        # 열 헤더 출력
+        print("\t\t" + " ".join([f"Tile {i:<2}     " for i in range(1, 10)]))
+        print("        " + "-" * 120)  # 구분선
+
+        # 9x9 매트릭스 형태로 구성하여 출력
+        for round in range(1, 10):  # 라운드가 1부터 9까지 있다고 가정
+            row = []
+            for tile in range(1, 10):
+                # 각 라운드의 각 타일 Q 값을 가져오고 없는 값은 0으로 설정
+                q_value = self.q_table.get(round, {}).get(tile, 0)
+                row.append(f"{q_value:10.2f}")  # 소수점 2자리로 정렬하여 출력, 칸 간격 10칸으로 설정
+            print(f"Round {round:<2} | " + " | ".join(row))  # 라운드 번호와 값 출력
+
+        print("        " + "-" * 120)  # 마지막 구분선
+
+
+
         
     def reset_tiles(self):
         """타일과 점수를 초기화하는 메서드."""
@@ -325,7 +340,8 @@ class DaehanQLearning:
             # 상대와 동일한 타일을 냈다면 큐값 업데이트 x
             if tile_diff == 0:
                 continue  
-
+            
+            """더 큰 포인트차로 이기도록 유도할 순 없을까"""
             # 게임 승리 -> 한 라운드에서 이긴다면 작은 차이로 이기는 것이 더 좋다
             if game_result > 0:
                 self.q_table[round][q_tile] += 1 / tile_diff 

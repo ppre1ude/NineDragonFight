@@ -36,11 +36,9 @@ def determine_winner(tile1, tile2):
 def user_vs_ai_play_game():
     human_player = HumanPlayer.Player()
     ai_player = AIPlayer.RandomAI()
+
     is_human_player_first = True 
     match_log = [] 
-    #player_played_tiles = []
-    #ai_player_played_tiles = [] 
-
     current_round = 1
 
     while human_player.tiles and ai_player.tiles:
@@ -55,6 +53,8 @@ def user_vs_ai_play_game():
         else:
             print(f"\n[{ai_player.name}의 차례]")
             ai_player_tile = ai_player.choose_tile() 
+            if ai_player_tile.color == "black": print(f"{ai_player.name}이 낸 색상 : ⚫️")
+            else: print(f"{ai_player.name}이 낸 색상 : ⚪️")
             human_player_tile = human_player.choose_tile()
 
         # 승자 결정 
@@ -159,7 +159,7 @@ def ai_vs_ai_play_game(k):
 
 def ai_vs_RLAI_play_game(k):
     """게임 초기 세팅"""
-    ai_player = AIPlayer.SmallFirstAI() 
+    ai_player = AIPlayer.SieunAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0
@@ -224,7 +224,7 @@ def ai_vs_RLAI_play_game(k):
 
         # 다음 게임 진행 
         k -= 1
-        
+
     """게임 끝 """
 
     """최종 큐 테이블 출력"""

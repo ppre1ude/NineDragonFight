@@ -34,76 +34,55 @@ def determine_winner(tile1, tile2):
     return tile1 if tile1.number > tile2.number else tile2
 
 def user_vs_ai_play_game():
-    player = HumanPlayer.Player()
-    ai_player = AIPlayer.BasedProbabilityAI()
-    current_player = random.choice([player, ai_player])
+    human_player = HumanPlayer.Player()
+    ai_player = AIPlayer.RandomAI()
+    is_human_player_first = True 
     match_log = [] 
-    round = 1
+    #player_played_tiles = []
+    #ai_player_played_tiles = [] 
 
-    while player.tiles and ai_player.tiles:
+    current_round = 1
+
+    while human_player.tiles and ai_player.tiles:
         print()
-        print(Style.BRIGHT, Fore.YELLOW, f"※ {round} 라운드 시작 ※ ", Style.RESET_ALL)
-        round+=1
-        print(f"\n[{current_player.name}의 차례]")
+        print(Style.BRIGHT, Fore.YELLOW, f"※ {current_round} 라운드 시작 ※ ", Style.RESET_ALL)
         
-        tile1 = current_player.choose_tile()
-        if current_player == ai_player: 
-            if tile1.color == 'black':
-                print("AI가 낸 색상 : ⚫️\n")
-            else:
-                print("AI가 낸 색상 : ⚪️\n")
-
-        other_player = ai_player if current_player == player else player
-        tile2 = other_player.choose_tile()
-        if current_player == player: 
-            if tile2.color == 'black':
-                print("AI가 낸 색상 : ⚫️\n")
-            else:
-                print("AI가 낸 색상 : ⚪️\n")
-
+        # 타일 고르기
+        if is_human_player_first:
+            print(f"\n[{human_player.name}의 차례]")
+            human_player_tile = human_player.choose_tile()
+            ai_player_tile = ai_player.choose_tile()
+        else:
+            print(f"\n[{ai_player.name}의 차례]")
+            ai_player_tile = ai_player.choose_tile() 
+            human_player_tile = human_player.choose_tile()
 
         # 승자 결정 
-        winner = determine_winner(tile1, tile2)
+        winner_tile = determine_winner(human_player_tile, ai_player_tile)
 
-        # 유지 
-        if current_player == player and winner == tile1:
+        if winner_tile == human_player_tile:
             print(Style.BRIGHT, Fore.BLUE, "\n !!!User의 승리!!!", Style.RESET_ALL)
-            current_player.round_points += 1
-            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
-            current_player, other_player = player, ai_player
-
-        # 변경 
-        elif current_player == player and winner == tile2:
+            human_player.round_points += 1
+            is_human_player_first = True
+        elif winner_tile == ai_player_tile:
             print(Style.BRIGHT, Fore.RED, "\n !!!AI의 승리!!!", Style.RESET_ALL)
-            other_player.round_points += 1   
-            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
-            current_player, other_player = ai_player, player
-
-        # 유지 
-        elif current_player == ai_player and winner == tile1:
-            print(Style.BRIGHT, Fore.RED, "\n !!!AI의 승리!!!", Style.RESET_ALL)
-            current_player.round_points += 1
-            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
-            current_player, other_player = ai_player, player
-
-        # 변경
-        elif current_player == ai_player and winner == tile2:
-            print(Style.BRIGHT, Fore.BLUE, "\n !!!User의 승리!!!", Style.RESET_ALL)
-            other_player.round_points += 1
-            match_log.append(f"{current_player.name} : {tile1} , {other_player.name} : {tile2}.")
-            current_player, other_player = player, ai_player
-
+            ai_player.round_points += 1
+            is_human_player_first = False
         else:
             print(Style.BRIGHT, Fore.GREEN, "\n !!!무승부!!!", Style.RESET_ALL)
-            match_log.append(f"무승부 : {tile1} vs. {tile2}.")
 
-        # Print round points for both players
-        print(Style.BRIGHT, Fore.YELLOW, f"라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}", Style.RESET_ALL)
+        # 매치 로그 추가 
+        match_log.append(f"{human_player.name} : {human_player_tile} , {ai_player.name} : {ai_player_tile}.")
+        
+        current_round+=1
+
+        # 라운드 포인트 출력
+        print(Style.BRIGHT, Fore.YELLOW, f"라운드 포인트 : {human_player.name}: {human_player.round_points}, {ai_player.name}: {ai_player.round_points}", Style.RESET_ALL)
         print("=" * 30)
 
     # 경기 결과 출력 
     print(Style.BRIGHT, Fore.YELLOW, "\n게임 종료!", Style.RESET_ALL)
-    print(f"최종 라운드 포인트 : {player.name}: {player.round_points}, {ai_player.name}: {ai_player.round_points}")
+    print(f"최종 라운드 포인트 : {human_player.name}: {human_player.round_points}, {ai_player.name}: {ai_player.round_points}")
     print("\n경기 기록: ")
     print("=" * 30)  
     for i, log in enumerate(match_log):
@@ -113,45 +92,53 @@ def user_vs_ai_play_game():
     print("=" * 30)  
 
 def ai_vs_ai_play_game(k):
+    ai_player1 = AIPlayer.RandomAI()
+    ai_player2 = AIPlayer.SmallFirstAI()
+
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
     draw_count = 0 
 
-    ai_player1 = AIPlayer.RandomAI()
-    ai_player2 = AIPlayer.SmallFirstAI()
+    """게임 시작"""
     while(k > 0): 
+        # 1라운드 선 플레이어는 랜덤으로 설정
+        is_ai_player1_first = random.choice([True, False])
+
+        # 게임마다 타일 리필 
         ai_player1.reset_tiles()
         ai_player2.reset_tiles()
-        current_player = random.choice([ai_player1, ai_player2])
 
+        ai_player1_played_tiles = []
+        ai_player2_played_tiles = []
+
+        current_round = 1
+
+        """라운드 시작"""
         while ai_player1.tiles and ai_player2.tiles:
-            
-            tile1 = current_player.choose_tile()
-            other_player = ai_player2 if current_player == ai_player1 else ai_player1
-            tile2 = other_player.choose_tile()
+
+            # 타일 고르기 
+            if is_ai_player1_first:
+                ai_player1_tile = ai_player1.choose_tile()
+                ai_player2_tile = ai_player2.choose_tile()
+            else:
+                ai_player2_tile = ai_player2.choose_tile()
+                ai_player1_tile = ai_player1.choose_tile()
+
+            # 무슨 타일을 골랐는지 기록
+            ai_player1_played_tiles.append(ai_player1_tile)
+            ai_player2_played_tiles.append(ai_player2_tile)
 
             # 승자 결정 
-            winner = determine_winner(tile1, tile2)
+            winner_tile = determine_winner(ai_player1_tile, ai_player2_tile)
 
-            # 유지 
-            if current_player == ai_player1 and winner == tile1:
-                current_player.round_points += 1
-                current_player, other_player = ai_player1, ai_player2
-
-            # 변경 
-            elif current_player == ai_player1 and winner == tile2:
-                other_player.round_points += 1   
-                current_player, other_player = ai_player2, ai_player1
-
-            # 유지 
-            elif current_player == ai_player2 and winner == tile1:
-                current_player.round_points += 1
-                current_player, other_player = ai_player2, ai_player1
-
-            # 변경
-            elif current_player == ai_player2 and winner == tile2:
-                other_player.round_points += 1
-                current_player, other_player = ai_player1, ai_player2
+            if winner_tile == ai_player1_tile:
+                ai_player1.round_points += 1
+                is_ai_player1_first = True 
+            elif winner_tile == ai_player2_tile:
+                ai_player2.round_points += 1
+                is_ai_player1_first = False 
+            else: pass 
+        """라운드 종료"""
 
         if ai_player1.round_points > ai_player2.round_points:
             ai_player1_winning_count += 1
@@ -161,9 +148,10 @@ def ai_vs_ai_play_game(k):
             draw_count += 1
 
         k -= 1 
-    
+    """게임 종료"""
+
     #경기 결과 출력 
-    print("\n게임 종료!")
+    print("\n모든 게임 종료!")
     total = ai_player1_winning_count + ai_player2_winning_count + draw_count
     print(f"{ai_player1.name}'s winning count = {ai_player1_winning_count}, 승률 = {round(ai_player1_winning_count / total * 100)}%")
     print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100)}%")
@@ -187,8 +175,8 @@ def ai_vs_RLAI_play_game(k):
         ai_player.reset_tiles()
         q_player.reset_tiles()
         
-        q_learning_played_tile = [] 
-        ai_player_played_tile = [] 
+        q_learning_played_tiles = [] 
+        ai_player_played_tiles = [] 
         current_round = 1
 
         """라운드 시작"""
@@ -203,8 +191,8 @@ def ai_vs_RLAI_play_game(k):
                 ai_player_tile = ai_player.choose_tile()
 
             # 무슨 타일을 골랐는지 기록
-            ai_player_played_tile.append(ai_player_tile)
-            q_learning_played_tile.append(q_player_tile)
+            ai_player_played_tiles.append(ai_player_tile)
+            q_learning_played_tiles.append(q_player_tile)
 
             # 승자 결정
             winner_tile = determine_winner(ai_player_tile, q_player_tile)
@@ -232,7 +220,7 @@ def ai_vs_RLAI_play_game(k):
             game_result = 0
         
         # 게임 종료 후 큐 테이블 업데이트
-        q_player.update_q_table(q_learning_played_tile, ai_player_played_tile, game_result)
+        q_player.update_q_table(q_learning_played_tiles, ai_player_played_tiles, game_result)
 
         # 다음 게임 진행 
         k -= 1
@@ -240,7 +228,7 @@ def ai_vs_RLAI_play_game(k):
 
     """모든 게임 종료"""
     # 게임 결과 출력
-    print("\n게임 종료!")
+    print("\n모든 게임 종료!")
     total = ai_player_winning_count + q_player_winning_count + draw_count
     print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
     print(f"{q_player.name}'s winning count = {q_player_winning_count}, 승률 = {round(q_player_winning_count / total * 100)}%")

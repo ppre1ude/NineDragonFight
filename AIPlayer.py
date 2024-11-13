@@ -100,12 +100,12 @@ class BigSmallShuffleAI:
         
         return chosen_tile
 
+"""로직 수정 필요해 보임"""
 class BasedProbabilityAI:
     def __init__(self):
         self.name = "확률 기반 AI" 
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
         self.round_points = 0
-        self.round_count = 0
 
     def reset_tiles(self):
         """타일과 점수를 초기화하는 메서드."""
@@ -126,6 +126,7 @@ class BasedProbabilityAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
 
+"""로직 자체가 잘못됨. 사용 안 함"""
 # class CalculateOpponentTileAI:
 #     def __init__(self):
 #         self.name = "상대방 타일 추정 AI" 

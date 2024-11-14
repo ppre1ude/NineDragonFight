@@ -1,4 +1,5 @@
 import random
+import math 
 import play_game
 import time 
 from collections import Counter
@@ -23,7 +24,6 @@ class RandomAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
     
-
 class BigFirstAI:
     def __init__(self):
         self.name = "큰 숫자부터 내는 AI"
@@ -417,3 +417,131 @@ class DaehanQLearning:
         
         # epsilon 감소
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)
+
+"""트리 노드"""
+class TreeNode:
+    def __init__(self, remaining_tiles, used_tiles):
+        self.remaining_tiles = remaining_tiles  # 남은 타일 리스트
+        self.used_tiles = used_tiles  # 사용된 타일 리스트
+        self.children = []  # 자식 노드들
+
+    def add_child(self, child_node):
+        """자식 노드를 추가"""
+        self.children.append(child_node)
+
+    def expand(self, opponent_tile):
+        """현재 노드에서 가능한 타일 조합으로 트리 확장"""
+        new_children = []
+        for tile in self.remaining_tiles:
+            if tile > opponent_tile:  # Tile 객체의 __lt__ 비교 연산자 사용
+                # 타일 선택 후, 새로운 남은 타일과 사용된 타일 리스트 생성
+                new_remaining = [t for t in self.remaining_tiles if t != tile]  # 리스트 내포 사용
+                new_used = self.used_tiles + [tile]
+                child_node = TreeNode(new_remaining, new_used)
+                new_children.append(child_node)
+                self.add_child(child_node)
+        return new_children
+
+"""트리 AI"""
+class TreeAI:
+    def __init__(self):
+        self.name = "Tree AI"
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+        self.root = TreeNode(self.tiles, [])  # 초기 루트 노드
+        self.current_node = self.root  # 현재 탐색 중인 노드
+
+    def reset_tiles(self):
+        """타일과 점수를 초기화하는 메서드."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+        self.root = TreeNode(self.tiles, [])
+        self.current_node = self.root
+
+    def update_possible_opponent_tiles(self, opponent_tile, result):
+        """상대가 낸 타일을 기준으로 가능한 트리 조합을 확장"""
+        if result == 'win':
+            self.current_node = next(
+                (child for child in self.current_node.children if opponent_tile in [t.number for t in child.used_tiles]),
+                None
+            )
+        elif result == 'lose':
+            self.current_node = next(
+                (child for child in self.current_node.children if opponent_tile not in [t.number for t in child.used_tiles]),
+                None
+            )
+        
+        if self.current_node is None:
+            self.current_node = self.root
+
+    def minimax(self, node, depth, maximizing_player, opponent_tiles):
+        """미니맥스 알고리즘을 통해 최적의 타일 선택 경로를 평가."""
+        if depth == 0 or not node.remaining_tiles:
+            return self.evaluate(node, opponent_tiles)
+
+        if maximizing_player:
+            max_eval = -math.inf
+            for my_tile in node.remaining_tiles:
+                new_remaining = [t for t in node.remaining_tiles if t != my_tile]
+                child_node = TreeNode(new_remaining, node.used_tiles + [my_tile])
+                node.add_child(child_node)
+
+                opponent_tile = opponent_tiles[0] if opponent_tiles else None
+                if opponent_tile and my_tile.number > opponent_tile.number:
+                    eval = self.minimax(child_node, depth - 1, False, opponent_tiles[1:])
+                    max_eval = max(max_eval, eval)
+            return max_eval
+        else:
+            min_eval = math.inf
+            for opp_tile in opponent_tiles:
+                new_remaining = [t for t in node.remaining_tiles if t.number > opp_tile.number]
+                child_node = TreeNode(new_remaining, node.used_tiles + [opp_tile])
+                node.add_child(child_node)
+
+                eval = self.minimax(child_node, depth - 1, True, opponent_tiles[1:])
+                min_eval = min(min_eval, eval)
+            return min_eval
+
+    def evaluate(self, node, opponent_remaining_tiles):
+        """상대 타일과의 비교를 통해 더 전략적인 평가 함수."""
+        score = 0
+
+        # 1. 승리 가능한 타일 수에 따라 점수 추가
+        for my_tile in node.remaining_tiles:
+            win_count = sum(1 for opp_tile in opponent_remaining_tiles if my_tile.number > opp_tile.number)
+            score += win_count * 2  # 승리 가능한 타일마다 점수를 부여
+        
+        # 2. 상대 타일과의 숫자 차이에 따른 점수
+        for my_tile in node.remaining_tiles:
+            for opp_tile in opponent_remaining_tiles:
+                if my_tile.number > opp_tile.number:
+                    score += (my_tile.number - opp_tile.number)  # 타일 간의 차이가 클수록 더 높은 점수
+
+        # 3. 미래 라운드를 위한 타일 유리성 점수
+        future_win_potential = sum(
+            1 for my_tile in node.remaining_tiles if any(my_tile.number > opp_tile.number for opp_tile in opponent_remaining_tiles)
+        )
+        score += future_win_potential * 3  # 미래 승리 가능성이 높은 경우 추가 점수
+
+        return score
+
+    def choose_tile(self):
+        """미래 라운드를 고려해 최적의 타일을 선택."""
+        best_score = -math.inf
+        best_tile = None
+
+        for tile in self.tiles:
+            new_remaining = [t for t in self.tiles if t != tile]
+            root_node = TreeNode(new_remaining, [tile])
+            score = self.minimax(root_node, depth=3, maximizing_player=False, opponent_tiles=[t for t in self.tiles])
+
+            if score > best_score:
+                best_score = score
+                best_tile = tile
+
+        if best_tile in self.tiles:
+            self.tiles.remove(best_tile)
+        return best_tile
+
+
+

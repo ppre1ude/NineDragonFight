@@ -157,7 +157,7 @@ def ai_vs_ai_play_game(k):
     print(f"{ai_player2.name}'s winning count = {ai_player2_winning_count}, 승률 = {round(ai_player2_winning_count / total * 100)}%")
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
-def ai_vs_RLAI_play_game(k):
+def ai_vs_QLearningAI_play_game(k):
     """게임 초기 세팅"""
     ai_player = AIPlayer.RandomAI() 
     q_player = AIPlayer.DaehanQLearning()
@@ -175,8 +175,9 @@ def ai_vs_RLAI_play_game(k):
         ai_player.reset_tiles()
         q_player.reset_tiles()
         
-        q_learning_played_tiles = [] 
         ai_player_played_tiles = [] 
+        q_played_tiles = [] 
+
         current_round = 1
 
         """라운드 시작"""
@@ -192,7 +193,7 @@ def ai_vs_RLAI_play_game(k):
 
             # 무슨 타일을 골랐는지 기록
             ai_player_played_tiles.append(ai_player_tile)
-            q_learning_played_tiles.append(q_player_tile)
+            q_played_tiles.append(q_player_tile)
 
             # 승자 결정
             winner_tile = determine_winner(ai_player_tile, q_player_tile)
@@ -220,11 +221,10 @@ def ai_vs_RLAI_play_game(k):
             game_result = 0
         
         # 게임 종료 후 큐 테이블 업데이트
-        q_player.update_q_table(q_learning_played_tiles, ai_player_played_tiles, game_result)
+        q_player.update_q_table(q_played_tiles, ai_player_played_tiles, game_result)
 
         # 다음 게임 진행 
         k -= 1
-
     """게임 끝 """
 
     """최종 큐 테이블 출력"""
@@ -238,4 +238,83 @@ def ai_vs_RLAI_play_game(k):
     print(f"{q_player.name}'s winning count = {q_player_winning_count}, 승률 = {round(q_player_winning_count / total * 100)}%")
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
 
+def ai_vs_TreeAI_play_game(k):
+    """Random AI와 Tree AI 간의 게임 시뮬레이션"""
+    ai_player = AIPlayer.MiddleFirstAI() 
+    tree_ai = AIPlayer.TreeAI()  # 트리 구조 기반 AI
 
+    ai_player_winning_count = 0
+    tree_ai_winning_count = 0
+    draw_count = 0
+    
+    """게임 시작"""
+    while k > 0:
+        # 1라운드 선 플레이어는 랜덤으로 설정
+        is_ai_player_first = random.choice([True, False])
+
+        # 게임마다 타일 리필
+        ai_player.reset_tiles()
+        tree_ai.reset_tiles()
+        
+        ai_player_played_tiles = [] 
+        tree_ai_played_tiles = [] 
+        current_round = 1
+
+        """라운드 시작"""
+        while ai_player.tiles and tree_ai.tiles:
+            # 타일 고르기 
+            if is_ai_player_first:
+                ai_player_tile = ai_player.choose_tile()
+                tree_ai_tile = tree_ai.choose_tile()
+            else:
+                tree_ai_tile = tree_ai.choose_tile()
+                ai_player_tile = ai_player.choose_tile()
+
+            # 무슨 타일을 골랐는지 기록
+            ai_player_played_tiles.append(ai_player_tile)
+            tree_ai_played_tiles.append(tree_ai_tile)
+
+            # 승자 결정
+            winner_tile = determine_winner(ai_player_tile, tree_ai_tile)
+
+            if winner_tile == ai_player_tile:
+                ai_player.round_points += 1
+                is_ai_player_first = True 
+            elif winner_tile == tree_ai_tile:
+                tree_ai.round_points += 1
+                is_ai_player_first = False 
+            else:
+                # 무승부일 경우 선 플레이어 변경 없이 다음 라운드 진행
+                is_ai_player_first = not is_ai_player_first
+
+            # Tree AI의 트리 구조 업데이트
+            if winner_tile == ai_player_tile:
+                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'lose')
+            elif winner_tile == tree_ai_tile:
+                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'win')
+            else:
+                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'draw')
+
+            current_round += 1
+        """라운드 끝"""
+
+        # 게임 종료 후 승자 집계
+        if ai_player.round_points > tree_ai.round_points:
+            ai_player_winning_count += 1
+        elif ai_player.round_points < tree_ai.round_points:
+            tree_ai_winning_count += 1
+        else:
+            draw_count += 1
+
+        # 다음 게임 진행 
+        k -= 1
+
+    """게임 끝 """
+
+    """모든 게임 종료"""
+    # 게임 결과 출력
+    print("\n모든 게임 종료!")
+    total = ai_player_winning_count + tree_ai_winning_count + draw_count
+    print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
+    print(f"{tree_ai.name}'s winning count = {tree_ai_winning_count}, 승률 = {round(tree_ai_winning_count / total * 100)}%")
+    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")

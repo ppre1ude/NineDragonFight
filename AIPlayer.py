@@ -1,7 +1,7 @@
 import random
 import play_game
 import time 
-from tabulate import tabulate 
+from collections import Counter
 
 class RandomAI:
     def __init__(self):
@@ -17,10 +17,12 @@ class RandomAI:
         
     def choose_tile(self):
         # 랜덤하게 고르는 AI
-        random.seed(time.time_ns() + time.time_ns() + 1234)
+        random.seed(time.time_ns())
+        random.shuffle(self.tiles) # shuffle 코드를 추가 하냐 안 하냐의 차이가 이렇게 크다고???? 
         chosen_tile = random.choice(self.tiles)
         self.tiles.remove(chosen_tile)
         return chosen_tile
+    
 
 class BigFirstAI:
     def __init__(self):
@@ -180,6 +182,69 @@ class MaintainPointsAI:
         self.tiles.remove(chosen_tile)
         return chosen_tile
         
+class SieunAI:
+    def __init__(self):
+        self.name = "전략적 확률 예측 AI"
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+        self.opponent_tile_distribution = Counter(range(1, 10))
+
+    def reset_tiles(self):
+        """타일과 점수를 초기화하고 상대의 타일 분포를 초기 상태로 리셋합니다."""
+        self.tiles = [play_game.Tile(i) for i in range(1, 10)]
+        self.round_points = 0
+        self.opponent_tile_distribution = Counter(range(1, 10))
+
+    def update_opponent_distribution_after_loss(self, my_tile):
+        """
+        패배 시 큰 타일 확률을 높이고 작은 타일도 약간 반영
+        """
+        for value in range(my_tile.number + 1, 10):
+            self.opponent_tile_distribution[value] += 1
+        for value in range(1, my_tile.number):
+            self.opponent_tile_distribution[value] += 0.5
+
+    def update_opponent_distribution_after_draw(self, drawn_tile):
+        """무승부 시 상대의 해당 타일을 제거합니다."""
+        if self.opponent_tile_distribution[drawn_tile.number] > 0:
+            self.opponent_tile_distribution[drawn_tile.number] -= 1
+
+    def choose_tile(self):
+        """상대의 패를 예측하여 최적의 타일을 선택하거나 전략적으로 큰 차이로 패배를 고려합니다."""
+        best_tile = None
+        max_win_chance = -1
+
+        for tile in self.tiles:
+            win_chance = self.calculate_win_chance(tile)
+
+            # 큰 차이로 패배할 전략적 선택지를 고려
+            if self.should_lose_big(tile):
+                win_chance *= 0.5  # 전략적 손실이므로 승리 확률을 낮게 설정해 강하게 유도
+
+            if win_chance > max_win_chance:
+                best_tile = tile
+                max_win_chance = win_chance
+
+        self.tiles.remove(best_tile)
+        
+        return best_tile
+
+    def calculate_win_chance(self, my_tile):
+        """내 타일이 상대 타일에 대해 이길 확률을 계산합니다."""
+        win_chance = 0.0
+        total_possible = sum(self.opponent_tile_distribution.values())
+        
+        for opponent_tile_value, count in self.opponent_tile_distribution.items():
+            if (my_tile.number == 1 and opponent_tile_value == 9) or my_tile.number > opponent_tile_value:
+                win_chance += count / total_possible
+
+        return win_chance
+
+    def should_lose_big(self, my_tile):
+        """특정 상황에서 큰 차이로 지도록 유도할지를 판단합니다. << 대체 왜 있는진 모르겠는데 승률 6할의 비결"""
+        # 특정 타일(예: 8)로 패배하여 상대의 더 작은 타일을 남기는 전략을 사용할지 결정
+        high_risk_tiles = [8, 7]  # 예시: 큰 차이로 지기 위해 주로 사용할 타일
+        return my_tile.number in high_risk_tiles
 
 """
 엡실론 (ε): 탐험과 이용의 균형을 조절하는 값. 값이 클수록 탐험을 많이 하며, 값이 작을수록 이미 알고 있는 행동을 자주 선택.
@@ -262,7 +327,7 @@ class DaehanQLearning:
         self.q_table = {round : {key : 0 for key in range(1, 10)} for round in range(1, 10)}
         self.epsilon = 1.0
         self.epsilon_decay = 0.95
-        self.min_epsilon = 0.1 
+        self.min_epsilon = 0.1
 
     def display_q_table(self):
         """Q Table을 전체 라운드를 포함한 9x9 표로 출력하는 메서드."""
@@ -281,10 +346,7 @@ class DaehanQLearning:
             print(f"Round {round:<2} | " + " | ".join(row))  # 라운드 번호와 값 출력
 
         print("        " + "-" * 120)  # 마지막 구분선
-
-
-
-        
+     
     def reset_tiles(self):
         """타일과 점수를 초기화하는 메서드."""
         self.tiles = [play_game.Tile(i) for i in range(1, 10)]
@@ -296,6 +358,7 @@ class DaehanQLearning:
 
         # 탐험 
         if random.uniform(0,1) <= self.epsilon:
+            random.shuffle(self.tiles)
             chosen_tile = random.choice(self.tiles)
             self.tiles.remove(chosen_tile)
             return chosen_tile
@@ -341,14 +404,16 @@ class DaehanQLearning:
             if tile_diff == 0:
                 continue  
             
+            old_q_value = self.q_table[round][q_tile]
+
             """더 큰 포인트차로 이기도록 유도할 순 없을까"""
             # 게임 승리 -> 한 라운드에서 이긴다면 작은 차이로 이기는 것이 더 좋다
             if game_result > 0:
-                self.q_table[round][q_tile] += 1 / tile_diff 
+                self.q_table[round][q_tile] += 1 / tile_diff
             elif game_result == 0: pass 
             # 게임 패배 -> 진다면 큰 차이로 지는 것이 더 좋다
             else:
-                self.q_table[round][q_tile] -= 1 / tile_diff
+                 self.q_table[round][q_tile] -= 1 / tile_diff
         
         # epsilon 감소
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.min_epsilon)

@@ -93,7 +93,7 @@ def user_vs_ai_play_game():
 
 def ai_vs_ai_play_game(k):
     ai_player1 = AIPlayer.RandomAI()
-    ai_player2 = AIPlayer.SmallFirstAI()
+    ai_player2 = AIPlayer.BigSmallShuffleAI()
 
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
@@ -159,7 +159,7 @@ def ai_vs_ai_play_game(k):
 
 def ai_vs_RLAI_play_game(k):
     """게임 초기 세팅"""
-    ai_player = AIPlayer.BigFirstAI() 
+    ai_player = AIPlayer.RandomAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0

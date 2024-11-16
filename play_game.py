@@ -50,6 +50,7 @@ def user_vs_ai_play_game():
             print(f"\n[{human_player.name}의 차례]")
             human_player_tile = human_player.choose_tile()
             ai_player_tile = ai_player.choose_tile()
+            print(f"{ai_player.name}이 낸 색상 : ⚪️")
         else:
             print(f"\n[{ai_player.name}의 차례]")
             ai_player_tile = ai_player.choose_tile() 
@@ -93,7 +94,7 @@ def user_vs_ai_play_game():
 
 def ai_vs_ai_play_game(k):
     ai_player1 = AIPlayer.RandomAI()
-    ai_player2 = AIPlayer.BigSmallShuffleAI()
+    ai_player2 = AIPlayer.SieunAI()
 
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
@@ -240,7 +241,7 @@ def ai_vs_QLearningAI_play_game(k):
 
 def ai_vs_TreeAI_play_game(k):
     """Random AI와 Tree AI 간의 게임 시뮬레이션"""
-    ai_player = AIPlayer.MiddleFirstAI() 
+    ai_player = AIPlayer.SmallFirstAI() 
     tree_ai = AIPlayer.TreeAI()  # 트리 구조 기반 AI
 
     ai_player_winning_count = 0

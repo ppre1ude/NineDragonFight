@@ -50,7 +50,8 @@ def user_vs_ai_play_game():
             print(f"\n[{human_player.name}의 차례]")
             human_player_tile = human_player.choose_tile()
             ai_player_tile = ai_player.choose_tile()
-            print(f"{ai_player.name}이 낸 색상 : ⚪️")
+            if ai_player_tile.color == "black": print(f"{ai_player.name}이 낸 색상 : ⚫️")
+            else: print(f"{ai_player.name}이 낸 색상 : ⚪️")
         else:
             print(f"\n[{ai_player.name}의 차례]")
             ai_player_tile = ai_player.choose_tile() 

@@ -37,61 +37,105 @@ def user_vs_ai_play_game():
     human_player = HumanPlayer.Player()
     ai_player = AIPlayer.RandomAI()
 
-    is_human_player_first = True 
-    match_log = [] 
+    is_human_player_first = True
+    match_log = []  # 전체 경기 로그
     current_round = 1
+    max_rounds = 9
 
-    while human_player.tiles and ai_player.tiles:
-        print()
-        print(Style.BRIGHT, Fore.YELLOW, f"※ {current_round} 라운드 시작 ※ ", Style.RESET_ALL)
-        
+    # 각 라운드 타일 기록 (색상만 표시)
+    round_records = [["-" for _ in range(max_rounds)] for _ in range(2)]  # [0]: Human, [1]: AI
+    round_results = ["-" for _ in range(max_rounds)]  # 라운드 결과 색상 정보
+
+    def clear_screen():
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+    def display_board(human_points, ai_points, current_round, first_player):
+        # 격자형 보드판 생성
+        table = PrettyTable()
+        field_names = ["Player", "Score"] + [f"Round {i}" for i in range(1, max_rounds + 1)]
+        table.field_names = field_names
+
+        # 플레이어 데이터 입력
+        human_row = [human_player.name, human_points] + round_records[0]
+        ai_row = [ai_player.name, ai_points] + round_records[1]
+
+        table.add_row(human_row)
+        table.add_row(ai_row)
+
+        # 보드판 출력
+        clear_screen()
+        print("\n" + "=" * 60)
+        print(f"             ⚔  ROUND {current_round}/{max_rounds} ⚔")
+        print(Style.BRIGHT, Fore.YELLOW, f"    First Player: {first_player}  ", Style.RESET_ALL)
+        print("=" * 60)
+        print(table)
+        print("=" * 60)
+
+        # 라운드 결과 색상 출력
+        print("Round Results: ", end="")
+        for result in round_results:
+            print(result, end=" ")
+        print("\n" + "=" * 60)
+
+    while current_round <= max_rounds and human_player.tiles and ai_player.tiles:
+        display_board(
+            human_player.round_points,
+            ai_player.round_points,
+            current_round,
+            first_player=human_player.name if is_human_player_first else ai_player.name
+        )
+
         # 타일 고르기
         if is_human_player_first:
             print(f"\n[{human_player.name}의 차례]")
             human_player_tile = human_player.choose_tile()
             ai_player_tile = ai_player.choose_tile()
-            if ai_player_tile.color == "black": print(f"{ai_player.name}이 낸 색상 : ⚫️")
-            else: print(f"{ai_player.name}이 낸 색상 : ⚪️")
         else:
             print(f"\n[{ai_player.name}의 차례]")
-            ai_player_tile = ai_player.choose_tile() 
-            if ai_player_tile.color == "black": print(f"{ai_player.name}이 낸 색상 : ⚫️")
-            else: print(f"{ai_player.name}이 낸 색상 : ⚪️")
+            ai_player_tile = ai_player.choose_tile()
+            if ai_player_tile.color == "black":
+                print(f"{ai_player.name}이 낸 색상 : ⚫️")
+            else:
+                print(f"{ai_player.name}이 낸 색상 : ⚪️")
             human_player_tile = human_player.choose_tile()
 
-        # 승자 결정 
-        winner_tile = determine_winner(human_player_tile, ai_player_tile)
+        # 타일 기록 업데이트
+        round_records[0][current_round - 1] = "⚫️" if human_player_tile.color == "black" else "⚪️"
+        round_records[1][current_round - 1] = "⚫️" if ai_player_tile.color == "black" else "⚪️"
 
+        # 승자 결정
+        winner_tile = determine_winner(human_player_tile, ai_player_tile)
         if winner_tile == human_player_tile:
-            print(Style.BRIGHT, Fore.BLUE, "\n !!!User의 승리!!!", Style.RESET_ALL)
             human_player.round_points += 1
+            round_results[current_round - 1] = Fore.BLUE + "W" + Style.RESET_ALL  # 승리
             is_human_player_first = True
         elif winner_tile == ai_player_tile:
-            print(Style.BRIGHT, Fore.RED, "\n !!!AI의 승리!!!", Style.RESET_ALL)
             ai_player.round_points += 1
+            round_results[current_round - 1] = Fore.RED + "L" + Style.RESET_ALL  # 패배
             is_human_player_first = False
         else:
-            print(Style.BRIGHT, Fore.GREEN, "\n !!!무승부!!!", Style.RESET_ALL)
+            round_results[current_round - 1] = Fore.GREEN + "D" + Style.RESET_ALL  # 무승부
 
-        # 매치 로그 추가 
-        match_log.append(f"{human_player.name} : {human_player_tile} , {ai_player.name} : {ai_player_tile}.")
-        
-        current_round+=1
+        # 매치 로그 추가
+        match_log.append(f"Round {current_round}: {human_player.name} - {human_player_tile}, {ai_player.name} - {ai_player_tile}")
 
-        # 라운드 포인트 출력
-        print(Style.BRIGHT, Fore.YELLOW, f"라운드 포인트 : {human_player.name}: {human_player.round_points}, {ai_player.name}: {ai_player.round_points}", Style.RESET_ALL)
-        print("=" * 30)
+        current_round += 1
 
-    # 경기 결과 출력 
-    print(Style.BRIGHT, Fore.YELLOW, "\n게임 종료!", Style.RESET_ALL)
-    print(f"최종 라운드 포인트 : {human_player.name}: {human_player.round_points}, {ai_player.name}: {ai_player.round_points}")
+    # 게임 종료
+    clear_screen()
+    print("\n" + "=" * 60)
+    print(Style.BRIGHT, Fore.YELLOW, "                  게임 종료!", Style.RESET_ALL)
+
+    if human_player.round_points > ai_player.round_points: print(Style.BRIGHT, Fore.YELLOW, f"{human_player.name}의 승리!", Style.RESET_ALL)
+    elif human_player.round_points <ai_player.round_points: print(Style.BRIGHT, Fore.YELLOW, f"{ai_player.name}의 승리!", Style.RESET_ALL)
+    else: print(Style.BRIGHT, Fore.YELLOW, f"무승부!", Style.RESET_ALL)
+
+    print(f"최종 점수: {human_player.name}: {human_player.round_points}, {ai_player.name}: {ai_player.round_points}")
     print("\n경기 기록: ")
-    print("=" * 30)  
-    for i, log in enumerate(match_log):
-        print(f"Round {i + 1}:")
-        print(f" - {log}")
-        print("-" * 30)  
-    print("=" * 30)  
+    print("=" * 60)
+    for log in match_log:
+        print(log)
+    print("=" * 60)
 
 def ai_vs_ai_play_game(k):
     ai_player1 = AIPlayer.RandomAI()

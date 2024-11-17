@@ -2,6 +2,8 @@ import HumanPlayer
 import AIPlayer
 import random 
 import time 
+from prettytable import PrettyTable
+import os
 from colorama import init, Fore, Style 
 
 init()

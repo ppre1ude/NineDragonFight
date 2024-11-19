@@ -1,30 +1,10 @@
-import HumanPlayer
-import AIPlayer
+import HumanPlayer, AIPlayer
 import random 
-import time 
-from prettytable import PrettyTable
 import os
 from colorama import init, Fore, Style 
+from prettytable import PrettyTable
 
 init()
-
-class Tile:
-    def __init__(self, number):
-        self.number = number
-        self.color = 'white' if number % 2 == 0 else 'black'
-
-    def __str__(self):
-        emoji = "⚪️" if self.color == 'white' else "⚫️"  # 이모지로 색상 표현
-        return f"{emoji} {self.number}"
-    
-    def __lt__(self, other):
-        return self.number < other.number
-    
-    # max_tile in self.tiles 하기 위해서 필요함
-    def __eq__(self, other):
-        if isinstance(other, Tile):
-            return self.number == other.number
-        return False
     
 def determine_winner(tile1, tile2):
     if tile1.number == tile2.number: 
@@ -37,7 +17,7 @@ def determine_winner(tile1, tile2):
 
 def user_vs_ai_play_game():
     human_player = HumanPlayer.Player()
-    ai_player = AIPlayer.RandomAI()
+    ai_player = AIPlayer.MinimaxAI()
 
     is_human_player_first = True
     match_log = []  # 전체 경기 로그
@@ -118,6 +98,15 @@ def user_vs_ai_play_game():
         else:
             round_results[current_round - 1] = Fore.GREEN + "D" + Style.RESET_ALL  # 무승부
 
+        # MinimaxAI의 트리 구조 업데이트
+        if ai_player.name == "Minimax AI":
+                if winner_tile == ai_player_tile:
+                    ai_player.update_possible_opponent_tiles(ai_player_tile.number, 'lose')
+                elif winner_tile == ai_player_tile:
+                    ai_player.update_possible_opponent_tiles(ai_player_tile.number, 'win')
+                else:
+                    ai_player.update_possible_opponent_tiles(ai_player_tile.number, 'draw')
+
         # 매치 로그 추가
         match_log.append(f"Round {current_round}: {human_player.name} - {human_player_tile}, {ai_player.name} - {ai_player_tile}")
 
@@ -140,8 +129,8 @@ def user_vs_ai_play_game():
     print("=" * 60)
 
 def ai_vs_ai_play_game(k):
-    ai_player1 = AIPlayer.RandomAI()
-    ai_player2 = AIPlayer.SieunAI()
+    ai_player1 = AIPlayer.SmallFirstAI()
+    ai_player2 = AIPlayer.MinimaxAI()
 
     ai_player1_winning_count = 0
     ai_player2_winning_count = 0
@@ -207,7 +196,7 @@ def ai_vs_ai_play_game(k):
 
 def ai_vs_QLearningAI_play_game(k):
     """게임 초기 세팅"""
-    ai_player = AIPlayer.RandomAI() 
+    ai_player = AIPlayer.BigFirstAI() 
     q_player = AIPlayer.DaehanQLearning()
 
     ai_player_winning_count = 0
@@ -284,85 +273,4 @@ def ai_vs_QLearningAI_play_game(k):
     total = ai_player_winning_count + q_player_winning_count + draw_count
     print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
     print(f"{q_player.name}'s winning count = {q_player_winning_count}, 승률 = {round(q_player_winning_count / total * 100)}%")
-    print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")
-
-def ai_vs_TreeAI_play_game(k):
-    """Random AI와 Tree AI 간의 게임 시뮬레이션"""
-    ai_player = AIPlayer.SmallFirstAI() 
-    tree_ai = AIPlayer.TreeAI()  # 트리 구조 기반 AI
-
-    ai_player_winning_count = 0
-    tree_ai_winning_count = 0
-    draw_count = 0
-    
-    """게임 시작"""
-    while k > 0:
-        # 1라운드 선 플레이어는 랜덤으로 설정
-        is_ai_player_first = random.choice([True, False])
-
-        # 게임마다 타일 리필
-        ai_player.reset_tiles()
-        tree_ai.reset_tiles()
-        
-        ai_player_played_tiles = [] 
-        tree_ai_played_tiles = [] 
-        current_round = 1
-
-        """라운드 시작"""
-        while ai_player.tiles and tree_ai.tiles:
-            # 타일 고르기 
-            if is_ai_player_first:
-                ai_player_tile = ai_player.choose_tile()
-                tree_ai_tile = tree_ai.choose_tile()
-            else:
-                tree_ai_tile = tree_ai.choose_tile()
-                ai_player_tile = ai_player.choose_tile()
-
-            # 무슨 타일을 골랐는지 기록
-            ai_player_played_tiles.append(ai_player_tile)
-            tree_ai_played_tiles.append(tree_ai_tile)
-
-            # 승자 결정
-            winner_tile = determine_winner(ai_player_tile, tree_ai_tile)
-
-            if winner_tile == ai_player_tile:
-                ai_player.round_points += 1
-                is_ai_player_first = True 
-            elif winner_tile == tree_ai_tile:
-                tree_ai.round_points += 1
-                is_ai_player_first = False 
-            else:
-                # 무승부일 경우 선 플레이어 변경 없이 다음 라운드 진행
-                is_ai_player_first = not is_ai_player_first
-
-            # Tree AI의 트리 구조 업데이트
-            if winner_tile == ai_player_tile:
-                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'lose')
-            elif winner_tile == tree_ai_tile:
-                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'win')
-            else:
-                tree_ai.update_possible_opponent_tiles(ai_player_tile.number, 'draw')
-
-            current_round += 1
-        """라운드 끝"""
-
-        # 게임 종료 후 승자 집계
-        if ai_player.round_points > tree_ai.round_points:
-            ai_player_winning_count += 1
-        elif ai_player.round_points < tree_ai.round_points:
-            tree_ai_winning_count += 1
-        else:
-            draw_count += 1
-
-        # 다음 게임 진행 
-        k -= 1
-
-    """게임 끝 """
-
-    """모든 게임 종료"""
-    # 게임 결과 출력
-    print("\n모든 게임 종료!")
-    total = ai_player_winning_count + tree_ai_winning_count + draw_count
-    print(f"{ai_player.name}'s winning count = {ai_player_winning_count}, 승률 = {round(ai_player_winning_count / total * 100)}%")
-    print(f"{tree_ai.name}'s winning count = {tree_ai_winning_count}, 승률 = {round(tree_ai_winning_count / total * 100)}%")
     print(f"무승부 횟수 = {draw_count}, 무승부율 = {round(draw_count / total * 100)}%")

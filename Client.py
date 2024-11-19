@@ -2,9 +2,9 @@ import socket
 import pickle
 
 class GameClient:
-    def __init__(self, host="10.30.150.24", port=12345):
-        self.host = host
-        self.port = port
+    def __init__(self):
+        self.host = input("Enter the server IP address: ")  # 서버 IP 주소 입력
+        self.port = int(input("Enter the server port: "))   # 서버 포트 입력
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:

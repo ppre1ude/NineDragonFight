@@ -1,6 +1,7 @@
 import HumanPlayer, AIPlayer
 import random 
 import os
+import socket, threading
 from colorama import init, Fore, Style 
 from prettytable import PrettyTable
 
@@ -15,7 +16,135 @@ def determine_winner(tile1, tile2):
         return tile2
     return tile1 if tile1.number > tile2.number else tile2
 
-def user_vs_ai_play_game():
+def user_vs_user_play_game():
+    # 플레이어 생성
+    server_player = HumanPlayer.Player()
+    server_player.name = "Player 1 (Server)"
+    client_player = HumanPlayer.Player()
+    client_player.name = "Player 2 (Client)"
+
+    # 게임 변수 초기화
+    max_rounds = 9
+    current_round = 1
+    is_server_player_first = True
+    round_records = [["-" for _ in range(max_rounds)] for _ in range(2)]  # [0]: Server, [1]: Client
+    round_results = ["-" for _ in range(max_rounds)]
+    match_log = []
+
+    # 소켓 서버 설정
+    host = '192.168.84.252'
+    port = 5555
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host, port))
+    server_socket.listen(1)
+
+    print("서버가 열렸습니다. 클라이언트 접속을 기다립니다...")
+    conn, addr = server_socket.accept()
+    print(f"클라이언트 접속 완료: {addr}")
+
+    def clear_screen():
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+    def display_board(server_points, client_points, current_round, first_player):
+        # 보드 출력
+        table = PrettyTable()
+        field_names = ["Player", "Score"] + [f"Round {i}" for i in range(1, max_rounds + 1)]
+        table.field_names = field_names
+
+        server_row = [server_player.name, server_points] + round_records[0]
+        client_row = [client_player.name, client_points] + round_records[1]
+
+        table.add_row(server_row)
+        table.add_row(client_row)
+
+        clear_screen()
+        print("\n" + "=" * 60)
+        print(f"             ⚔  ROUND {current_round}/{max_rounds} ⚔")
+        print(Style.BRIGHT, Fore.YELLOW, f"    First Player: {first_player}  ", Style.RESET_ALL)
+        print("=" * 60)
+        print(table)
+        print("=" * 60)
+
+        print("Round Results: ", end="")
+        for result in round_results:
+            print(result, end=" ")
+        print("\n" + "=" * 60)
+
+    def handle_client_input(player, conn):
+        conn.sendall("타일 번호(1-9)를 선택하세요: ".encode())
+        choice = int(conn.recv(1024).decode())
+        chosen_tile = next(tile for tile in player.tiles if tile.number == choice)
+        player.tiles.remove(chosen_tile)
+        return chosen_tile
+
+    # 게임 진행
+    while current_round <= max_rounds and server_player.tiles and client_player.tiles:
+        display_board(
+            server_player.round_points,
+            client_player.round_points,
+            current_round,
+            first_player=server_player.name if is_server_player_first else client_player.name
+        )
+
+        # 타일 선택
+        if is_server_player_first:
+            print(f"[{server_player.name}의 차례]")
+            server_tile = server_player.choose_tile()
+
+            print(f"[{client_player.name}의 차례]")
+            client_tile = handle_client_input(client_player, conn)
+        else:
+            print(f"[{client_player.name}의 차례]")
+            client_tile = handle_client_input(client_player, conn)
+
+            print(f"[{server_player.name}의 차례]")
+            server_tile = server_player.choose_tile()
+
+        # 타일 기록 업데이트
+        round_records[0][current_round - 1] = str(server_tile)
+        round_records[1][current_round - 1] = str(client_tile)
+
+        # 승자 결정
+        winner_tile = determine_winner(server_tile, client_tile)
+        if winner_tile == server_tile:
+            server_player.round_points += 1
+            round_results[current_round - 1] = Fore.BLUE + "W" + Style.RESET_ALL
+            is_server_player_first = True
+        elif winner_tile == client_tile:
+            client_player.round_points += 1
+            round_results[current_round - 1] = Fore.RED + "L" + Style.RESET_ALL
+            is_server_player_first = False
+        else:
+            round_results[current_round - 1] = Fore.GREEN + "D" + Style.RESET_ALL
+
+        match_log.append(
+            f"Round {current_round}: {server_player.name} - {server_tile}, {client_player.name} - {client_tile}"
+        )
+        current_round += 1
+
+    # 게임 종료
+    display_board(
+        server_player.round_points,
+        client_player.round_points,
+        current_round - 1,
+        first_player=server_player.name if is_server_player_first else client_player.name
+    )
+    print("\n게임 종료!")
+    if server_player.round_points > client_player.round_points:
+        print(f"{server_player.name} 승리!")
+    elif server_player.round_points < client_player.round_points:
+        print(f"{client_player.name} 승리!")
+    else:
+        print("무승부!")
+
+    print("\n최종 경기 기록:")
+    for log in match_log:
+        print(log)
+
+    conn.close()
+    server_socket.close()
+
+def user_vs_ai_play_game(): 
     human_player = HumanPlayer.Player()
     ai_player = AIPlayer.MinimaxAI()
 

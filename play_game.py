@@ -146,7 +146,7 @@ def user_vs_user_play_game():
 
 def user_vs_ai_play_game(): 
     human_player = HumanPlayer.Player()
-    ai_player = AIPlayer.MinimaxAI()
+    ai_player = AIPlayer.BigFirstAI()
 
     is_human_player_first = True
     match_log = []  # 전체 경기 로그
